@@ -1,9 +1,2 @@
 <resources>
-    <string name="title_kmp_lab">KMP Learning Lab</string>
-    <string name="label_day">Dia</string>
-    <string name="label_last_refresh">Ultimo refresh (epoch s):</string>
-    <string name="button_next_day">Siguiente dia</string>
-    <string name="button_toggle_concepts">Mostrar/Ocultar conceptos</string>
-    <string name="button_refresh_clock">Refrescar reloj</string>
 </resources>
-

@@ -5,6 +5,7 @@ This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM
 If you are coming from Android + Jetpack Compose and want a practical KMP ramp-up in this same repo, follow:
 
 - [KMP_RUTA_7_DIAS](./docs/KMP_RUTA_7_DIAS.md)
+- [MIGRATION_ALKILOAPP_TO_KMP](./docs/MIGRATION_ALKILOAPP_TO_KMP.md)
 
 * [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
   It contains several subfolders:
