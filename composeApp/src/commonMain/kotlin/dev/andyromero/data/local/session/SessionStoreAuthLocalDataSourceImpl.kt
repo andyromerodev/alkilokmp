@@ -1,4 +1,4 @@
-package dev.andyromero.data.local
+package dev.andyromero.data.local.session
 
 import kotlinx.coroutines.flow.Flow
 

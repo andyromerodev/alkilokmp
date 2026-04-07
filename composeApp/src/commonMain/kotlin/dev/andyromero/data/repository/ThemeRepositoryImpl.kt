@@ -1,6 +1,6 @@
 package dev.andyromero.data.repository
 
-import dev.andyromero.data.local.ThemeSettingsStoreContract
+import dev.andyromero.data.local.settings.ThemeSettingsStoreContract
 import dev.andyromero.domain.model.ThemeMode
 import dev.andyromero.domain.repository.ThemeRepositoryContract
 import kotlinx.coroutines.flow.Flow

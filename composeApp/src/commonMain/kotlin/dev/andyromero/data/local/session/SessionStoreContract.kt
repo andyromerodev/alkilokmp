@@ -1,8 +1,8 @@
-package dev.andyromero.data.local
+package dev.andyromero.data.local.session
 
 import kotlinx.coroutines.flow.Flow
 
-internal interface AuthLocalDataSourceContract {
+internal interface SessionStoreContract {
     val session: Flow<Session?>
 
     suspend fun saveSession(session: Session)

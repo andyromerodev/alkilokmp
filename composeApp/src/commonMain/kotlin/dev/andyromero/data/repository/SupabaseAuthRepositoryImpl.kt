@@ -6,8 +6,8 @@ import dev.andyromero.core.error.ErrorMapper
 import dev.andyromero.core.logging.Logger
 import dev.andyromero.core.platform.NetworkStatusProvider
 import dev.andyromero.core.result.Result
-import dev.andyromero.data.local.AuthLocalDataSourceContract
-import dev.andyromero.data.local.Session
+import dev.andyromero.data.local.session.AuthLocalDataSourceContract
+import dev.andyromero.data.local.session.Session
 import dev.andyromero.data.remote.AuthRemoteDataSourceContract
 import dev.andyromero.data.remote.toDomain
 import dev.andyromero.domain.model.Profile

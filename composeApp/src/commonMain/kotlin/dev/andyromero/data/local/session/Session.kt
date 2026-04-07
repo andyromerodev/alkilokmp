@@ -1,8 +1,9 @@
-package dev.andyromero.data.local
+package dev.andyromero.data.local.session
 
 import dev.andyromero.domain.model.UserRole
+import kotlin.time.Clock
 
-data class Session(
+internal data class Session(
     val accessToken: String,
     val refreshToken: String,
     val expiresAt: Long,
@@ -11,5 +12,5 @@ data class Session(
     val role: UserRole,
 ) {
     val isExpired: Boolean
-        get() = false
+        get() = Clock.System.now().epochSeconds > expiresAt
 }
