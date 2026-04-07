@@ -101,10 +101,47 @@ En `commonMain/di`:
 3. Implementar almacenamiento real en JS/Wasm (localStorage).
 4. Añadir mappers de `hostcache` <-> dominio cuando se migren slices 2 y 3.
 
+## Próximas tareas (plan operativo)
+
+### Prioridad alta (siguiente bloque)
+1. **Slice 2: Properties + Favorites**
+   - Migrar `PropertyList`, `PropertyDetail` y `Favorites` desde `AlkiloApp` a `commonMain`.
+   - Crear contratos/repos/use-cases faltantes para propiedades/favoritos.
+   - Conectar rutas reales en `NavGraph` reemplazando placeholders de `MainTabs`.
+2. **Navegación real de tabs**
+   - Mantener `Routes` como fuente única de verdad.
+   - Implementar navegación de tabs (main y host) sin perder estado de pantalla.
+3. **Settings + Theme**
+   - Migrar pantalla de settings y flujo de cambio de tema usando `ThemeRepositoryContract`.
+   - Persistir elección de tema en store local ya implementado.
+
+### Prioridad media
+1. **Slice 3: Bookings + Host**
+   - Migrar `CreateBooking`, `HostProperties`, `HostBookings`, `HostBookingDetail`.
+   - Integrar `hostcache` en repositorios para lectura/escritura de cache.
+2. **Mapeos de hostcache**
+   - Añadir mappers `domain <-> cache` para bookings/propiedades host.
+   - Definir reglas de invalidez/refresh de cache.
+3. **Auth UX de salida**
+   - Implementar logout en settings con limpieza de stores de sesión y navegación a login.
+
+### Prioridad baja (hardening)
+1. **Web persistence real**
+   - Reemplazar in-memory en JS/Wasm por `localStorage`.
+2. **Recursos multiplataforma**
+   - Consolidar strings y recursos visuales en `composeResources` para evitar hardcodes.
+3. **Observabilidad**
+   - Asegurar logging consistente por target para fallos de red/auth/supabase.
+
+### Definición de terminado por tarea
+1. Sin imports Android-only en `commonMain`.
+2. Respeta naming `Contract`/`Impl` y herencia de `BaseViewModel`.
+3. Navegación integrada en `NavGraph` (no callbacks sueltos en `App.kt`).
+4. Update de este documento al cerrar cada bloque.
+
 ## Checklist para cada nueva tarea
 1. Confirmar si es **solo alkilokmp**.
 2. Revisar este archivo antes de editar.
 3. Mantener capas y nombres (`Contract`/`Impl`).
 4. Si afecta auth/startup, validar flujo Splash -> role route.
 5. Documentar al final cambios en este mismo archivo (append o actualización de secciones).
-
