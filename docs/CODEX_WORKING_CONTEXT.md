@@ -1,6 +1,6 @@
 # CODEX_WORKING_CONTEXT
 
-Última actualización: 2026-04-09
+Última actualización: 2026-04-09 (UI session)
 Proyecto destino: `/Users/andy/AndroidStudioProjects/alkilokmp`
 Proyecto fuente (solo lectura): `/Users/andy/AndroidStudioProjects/AlkiloApp`
 
@@ -109,6 +109,31 @@ En `commonMain/di`:
 5. En data layer, patrón obligatorio: `RepositoryImpl -> Remote/LocalDataSourceContract -> Impl concreta`.
 6. Auditoría 2026-04-09: no quedan repositorios con acceso directo a Supabase/Ktor; `Auth` y `Property` ya pasan por `RemoteDataSourceContract`.
 
+## Decisiones de UI/Presentación (2026-04-09)
+
+### Patrón de Scaffold: NO anidar Scaffolds dentro de tabs
+- `MainTabsScreen` es el **único Scaffold** para las tabs de cliente.
+- `PropertyListScreen` y `FavoritesScreen` **no tienen Scaffold propio**.
+- Ambas reciben `contentPadding: PaddingValues` desde el Scaffold padre.
+- El `LazyColumn` aplica `contentPadding.calculateBottomPadding()` como bottom padding para que el contenido se scrollee por encima del nav flotante.
+- Status bar top padding se obtiene con `WindowInsets.statusBars.asPaddingValues()` directamente.
+- **Regla**: todo nuevo tab screen en `MainTabsScreen` o `HostTabsScreen` debe seguir este patrón — sin Scaffold propio, recibir `contentPadding`.
+
+### BottomNav flotante (`AlkiloBottomBar`)
+- Diseño: `Surface(shape = RoundedCornerShape(36.dp), color = surface.copy(alpha = 0.92f))` dentro de `Box(padding(horizontal=20.dp, vertical=12.dp))`.
+- Transparencia parcial (`alpha = 0.92f`) para que los cards debajo sean visibles al hacer scroll.
+- `FloatingNavItem`: ícono dentro de una píldora animada (`animateColorAsState` spring) — solo el ícono lleva fondo coloreado; el label queda abajo con color primario cuando está seleccionado.
+- Items con `weight(1f)` para distribución uniforme.
+- `BottomNavItem` tiene campo `icon: ImageVector` obligatorio — siempre proveer ícono al instanciar.
+
+### SearchHeader en PropertyListScreen
+- Extraído como composable privado `SearchHeader(userName, query, onQueryChange, selectedType, onSelectType)`.
+- Muestra greeting `"Hola, $userName 👋"` + fila de ubicación si `userName` no está vacío; de lo contrario muestra `"Explorar propiedades"`.
+- `userName` viene de `ObserveCurrentProfileUseCase` → `profile.fullName.split(" ").first()` observado en `MainTabsScreen`.
+- Barra de búsqueda: `TextField` + `RoundedCornerShape(50)` + `TextFieldDefaults.colors(indicatorColor = Transparent)` (pill, sin línea inferior).
+- Scroll-hide: `AnimatedVisibility(slideInVertically + fadeIn / slideOutVertically + fadeOut)` controlado por `snapshotFlow { firstVisibleItemIndex to firstVisibleItemScrollOffset }` con umbral ±10px.
+- Header siempre visible cuando `filteredProperties.size <= 3` o `isLoading`.
+
 ## Qué no romper en próximas tareas
 1. No reintroducir código Android-only en `commonMain`.
 2. No volver a `InMemory` para sesión/theme/favorites en Android/iOS/JVM.
@@ -116,6 +141,8 @@ En `commonMain/di`:
 4. No saltarse `BaseViewModel` para nuevos ViewModels de presentación compartida.
 5. No hardcodear navegación en `App.kt`; enrutar desde `navigation/NavGraph.kt`.
 6. No mover llamadas `postgrest/auth/storage` a repositorios; mantenerlas en `RemoteDataSourceImpl`.
+7. No añadir `Scaffold` dentro de screens que viven como tabs en `MainTabsScreen` o `HostTabsScreen`; usar patrón `contentPadding: PaddingValues`.
+8. No instanciar `BottomNavItem` sin `icon`; campo obligatorio desde 2026-04-09.
 
 ## Pendientes inmediatos recomendados
 1. Reemplazar pantallas placeholder de `MainTabs/HostTabs/AdminBookings/CreateBooking` con features reales migradas.

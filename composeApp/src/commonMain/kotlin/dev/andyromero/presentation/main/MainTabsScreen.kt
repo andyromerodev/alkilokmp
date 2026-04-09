@@ -1,13 +1,20 @@
 package dev.andyromero.presentation.main
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import dev.andyromero.domain.usecase.auth.ObserveCurrentProfileUseCase
 import dev.andyromero.navigation.Routes
 import dev.andyromero.presentation.components.AlkiloBottomBar
 import dev.andyromero.presentation.components.BottomNavItem
@@ -31,17 +39,27 @@ internal fun MainTabsScreen(
 ) {
     val items = remember {
         listOf(
-            BottomNavItem(label = "Playa", route = Routes.BeachList),
-            BottomNavItem(label = "Favoritas", route = Routes.Favorites),
-            BottomNavItem(label = "Settings", route = Routes.Settings),
+            BottomNavItem(label = "Inicio",     route = Routes.BeachList, icon = Icons.Rounded.Home),
+            BottomNavItem(label = "Favoritas",  route = Routes.Favorites, icon = Icons.Rounded.Favorite),
+            BottomNavItem(label = "Reservas",   route = Routes.Settings,  icon = Icons.Rounded.BookmarkBorder),
+            BottomNavItem(label = "Perfil",     route = Routes.Profile,   icon = Icons.Rounded.Person),
         )
     }
     var tabRoute by remember { mutableStateOf<Routes>(Routes.BeachList) }
 
     val propertyListViewModel = remember { koin.get<PropertyListViewModel>() }
     val favoritesViewModel = remember { koin.get<FavoritesViewModel>() }
+    val observeProfile = remember { koin.get<ObserveCurrentProfileUseCase>() }
+
+    var firstName by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        observeProfile().collect { profile ->
+            firstName = profile?.fullName?.split(" ")?.firstOrNull().orEmpty()
+        }
+    }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             AlkiloBottomBar(
                 currentRoute = tabRoute,
@@ -54,30 +72,25 @@ internal fun MainTabsScreen(
             Routes.BeachList -> PropertyListScreen(
                 viewModel = propertyListViewModel,
                 onNavigateToDetail = onNavigateToPropertyDetail,
-                onShowMessage = { },
+                onShowMessage = {},
+                userName = firstName,
+                contentPadding = paddingValues,
             )
 
             Routes.Favorites -> FavoritesScreen(
                 viewModel = favoritesViewModel,
                 onNavigateToDetail = onNavigateToPropertyDetail,
-                onShowMessage = { },
+                onShowMessage = {},
+                contentPadding = paddingValues,
             )
 
-            Routes.Settings -> SettingsTabPlaceholder(
-                modifier = Modifier.padding(paddingValues),
-            )
-
-            else -> SettingsTabPlaceholder(
-                modifier = Modifier.padding(paddingValues),
-            )
+            else -> TabPlaceholder(modifier = Modifier.padding(paddingValues))
         }
     }
 }
 
 @Composable
-private fun SettingsTabPlaceholder(
-    modifier: Modifier = Modifier,
-) {
+private fun TabPlaceholder(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -85,7 +98,7 @@ private fun SettingsTabPlaceholder(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = "Settings", style = MaterialTheme.typography.headlineMedium)
+        Text(text = "Próximamente", style = MaterialTheme.typography.headlineMedium)
         Text(
             modifier = Modifier.padding(top = 8.dp),
             text = "Slice pendiente",

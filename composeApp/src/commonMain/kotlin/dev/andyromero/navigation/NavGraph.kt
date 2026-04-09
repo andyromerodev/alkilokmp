@@ -36,6 +36,7 @@ internal fun AlkiloNavGraph(
     koin: Koin,
     startDestination: Routes = Routes.Splash,
 ) {
+    println("🔵 [Nav] AlkiloNavGraph — start, route=$startDestination")
     var route by remember { mutableStateOf<Routes>(startDestination) }
 
     val restoreSessionUseCase = remember { koin.get<RestoreSessionUseCase>() }
@@ -51,17 +52,23 @@ internal fun AlkiloNavGraph(
     }
 
     LaunchedEffect(route, isLoggedIn, currentProfile) {
+        println("🔵 [Nav] splash check — route=$route isLoggedIn=$isLoggedIn role=${currentProfile?.role}")
         if (route != Routes.Splash) return@LaunchedEffect
 
         when (isLoggedIn) {
             null -> Unit
-            false -> route = Routes.Login()
+            false -> {
+                println("🔵 [Nav] → Login")
+                route = Routes.Login()
+            }
             true -> {
-                route = when (currentProfile?.role ?: UserRole.CLIENT) {
+                val next = when (currentProfile?.role ?: UserRole.CLIENT) {
                     UserRole.CLIENT -> Routes.MainTabs
                     UserRole.HOST -> Routes.HostTabs
                     UserRole.ADMIN -> Routes.AdminBookings
                 }
+                println("🔵 [Nav] → $next")
+                route = next
             }
         }
     }

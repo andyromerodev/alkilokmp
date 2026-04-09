@@ -12,10 +12,14 @@ import org.koin.mp.KoinPlatform
 @Composable
 @Preview
 fun App() {
+    println("🔵 [App] composable — start")
     val koin = remember {
+        println("🔵 [App] remember — initKoin")
         initKoinIfNeeded()
+        println("🔵 [App] remember — getKoin")
         KoinPlatform.getKoin()
     }
+    println("🔵 [App] koin ready — composing NavGraph")
 
     MaterialTheme {
         AlkiloNavGraph(

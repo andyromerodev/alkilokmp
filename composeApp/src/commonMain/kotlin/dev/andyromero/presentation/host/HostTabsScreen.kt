@@ -15,6 +15,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Settings
 import dev.andyromero.navigation.Routes
 import dev.andyromero.presentation.components.AlkiloBottomBar
 import dev.andyromero.presentation.components.BottomNavItem
@@ -29,9 +33,9 @@ private sealed interface HostTabRoute {
 internal fun HostTabsScreen() {
     val items = remember {
         listOf(
-            BottomNavItem(label = "Propiedades", route = Routes.HostProperties),
-            BottomNavItem(label = "Reservas", route = Routes.HostBookings),
-            BottomNavItem(label = "Config", route = Routes.HostSettings),
+            BottomNavItem(label = "Propiedades", route = Routes.HostProperties, icon = Icons.Rounded.Home),
+            BottomNavItem(label = "Reservas",    route = Routes.HostBookings,   icon = Icons.Rounded.BookmarkBorder),
+            BottomNavItem(label = "Config",      route = Routes.HostSettings,   icon = Icons.Rounded.Settings),
         )
     }
     var tabRoute by remember { mutableStateOf<HostTabRoute>(HostTabRoute.HostProperties) }
