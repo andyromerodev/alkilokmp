@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,8 +23,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,7 +42,7 @@ internal fun PropertyListScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var query by rememberSaveable { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf<PropertyType?>(null) }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(viewModel.effects) {
         viewModel.effects.collect { effect ->
@@ -52,9 +53,30 @@ internal fun PropertyListScreen(
         }
     }
 
-    val filteredProperties = state.properties
-        .filterByType(selectedType)
-        .filterByQuery(query)
+    val filteredProperties = state.properties.filterByQuery(query)
+
+    LaunchedEffect(
+        listState,
+        filteredProperties.size,
+        state.isLoading,
+        state.isPaging,
+        state.canLoadMore,
+        query,
+    ) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
+            .collect { lastVisibleIndex ->
+                val shouldLoadMore = query.isBlank() &&
+                    filteredProperties.isNotEmpty() &&
+                    state.isLoading.not() &&
+                    state.isPaging.not() &&
+                    state.canLoadMore &&
+                    lastVisibleIndex >= filteredProperties.lastIndex - 2
+
+                if (shouldLoadMore) {
+                    viewModel.sendIntent(PropertyListIntent.LoadNextPage)
+                }
+            }
+    }
 
     Scaffold(
         topBar = {
@@ -85,15 +107,18 @@ internal fun PropertyListScreen(
             ) {
                 item {
                     FilterChip(
-                        selected = selectedType == null,
-                        onClick = { selectedType = null },
+                        selected = state.selectedType == null,
+                        onClick = { viewModel.sendIntent(PropertyListIntent.SelectType(null)) },
                         label = { Text("Todos") },
                     )
                 }
                 items(PropertyType.entries) { type ->
                     FilterChip(
-                        selected = selectedType == type,
-                        onClick = { selectedType = if (selectedType == type) null else type },
+                        selected = state.selectedType == type,
+                        onClick = {
+                            val nextType = if (state.selectedType == type) null else type
+                            viewModel.sendIntent(PropertyListIntent.SelectType(nextType))
+                        },
                         label = { Text(type.toDisplayName()) },
                     )
                 }
@@ -125,6 +150,7 @@ internal fun PropertyListScreen(
 
                 else -> {
                     LazyColumn(
+                        state = listState,
                         contentPadding = PaddingValues(vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
@@ -140,15 +166,24 @@ internal fun PropertyListScreen(
                                 },
                             )
                         }
+
+                        if (state.isPaging) {
+                            item {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
-}
-
-private fun List<Property>.filterByType(selectedType: PropertyType?): List<Property> {
-    return if (selectedType == null) this else filter { it.type == selectedType }
 }
 
 private fun List<Property>.filterByQuery(query: String): List<Property> {

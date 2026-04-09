@@ -39,18 +39,25 @@ internal val dataModule = module {
     single<HostCacheStoreContract> { HostCacheStoreImpl(keyValueStoreFactory = get()) }
 
     single<AuthLocalDataSourceContract> {
-        SessionStoreAuthLocalDataSourceImpl(sessionStore = get())
+        SessionStoreAuthLocalDataSourceImpl(
+            sessionStore = get(),
+            logger = get(),
+        )
     }
 
     single<AuthRemoteDataSourceContract> {
         SupabaseAuthRemoteDataSourceImpl(
             auth = get(),
             postgrest = get(),
+            logger = get(),
         )
     }
 
     single<PropertyRemoteDataSourceContract> {
-        SupabasePropertyRemoteDataSourceImpl(postgrest = get())
+        SupabasePropertyRemoteDataSourceImpl(
+            postgrest = get(),
+            logger = get(),
+        )
     }
 
     single<AuthRepositoryContract> {

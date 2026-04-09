@@ -1,6 +1,7 @@
 package dev.andyromero.presentation.property.list
 
 import dev.andyromero.core.result.Result
+import dev.andyromero.domain.model.PropertyType
 import dev.andyromero.domain.usecase.favorites.ObserveFavoritesUseCase
 import dev.andyromero.domain.usecase.favorites.ToggleFavoriteUseCase
 import dev.andyromero.domain.usecase.property.GetPropertiesUseCase
@@ -11,15 +12,20 @@ internal class PropertyListViewModel(
     private val observeFavoritesUseCase: ObserveFavoritesUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
 ) : BaseViewModel<PropertyListEffect, PropertyListIntent, PropertyListState>(PropertyListState()) {
+    private companion object {
+        const val PAGE_SIZE = 3
+    }
 
     init {
         observeFavorites()
-        sendIntent(PropertyListIntent.Load)
+        sendIntent(PropertyListIntent.LoadInitial)
     }
 
     override suspend fun handleIntent(intent: PropertyListIntent) {
         when (intent) {
-            PropertyListIntent.Load -> load()
+            PropertyListIntent.LoadInitial -> load(reset = true)
+            PropertyListIntent.LoadNextPage -> load(reset = false)
+            is PropertyListIntent.SelectType -> selectType(intent.type)
             is PropertyListIntent.ToggleFavorite -> toggleFavorite(intent.propertyId)
             is PropertyListIntent.OpenProperty -> emitEffect(PropertyListEffect.NavigateToPropertyDetail(intent.propertyId))
         }
@@ -33,15 +39,49 @@ internal class PropertyListViewModel(
         }
     }
 
-    private fun load() {
+    private fun load(reset: Boolean) {
         launch {
-            setState { copy(isLoading = true, errorMessage = null) }
-            when (val result = getPropertiesUseCase()) {
+            val current = currentState
+            if (reset.not() && (current.isLoading || current.isPaging || current.canLoadMore.not())) return@launch
+
+            if (reset) {
+                setState {
+                    copy(
+                        isLoading = true,
+                        isPaging = false,
+                        canLoadMore = true,
+                        nextPage = 0,
+                        properties = emptyList(),
+                        errorMessage = null,
+                    )
+                }
+            } else {
+                setState { copy(isPaging = true, errorMessage = null) }
+            }
+
+            val pageToLoad = if (reset) 0 else current.nextPage
+            when (
+                val result = getPropertiesUseCase(
+                    page = pageToLoad,
+                    pageSize = PAGE_SIZE,
+                    type = currentState.selectedType,
+                )
+            ) {
                 is Result.Success -> {
+                    val loaded = result.data
+                    val hasMore = loaded.size >= PAGE_SIZE
                     setState {
+                        val merged = if (reset) {
+                            loaded
+                        } else {
+                            (properties + loaded).distinctBy { it.id }
+                        }
                         copy(
                             isLoading = false,
-                            properties = result.data,
+                            isPaging = false,
+                            properties = merged,
+                            canLoadMore = hasMore,
+                            nextPage = if (hasMore) pageToLoad + 1 else pageToLoad,
                             errorMessage = null,
                         )
                     }
@@ -51,6 +91,7 @@ internal class PropertyListViewModel(
                     setState {
                         copy(
                             isLoading = false,
+                            isPaging = false,
                             errorMessage = result.error.message,
                         )
                     }
@@ -58,6 +99,15 @@ internal class PropertyListViewModel(
                 }
             }
         }
+    }
+
+    private fun selectType(type: PropertyType?) {
+        setState {
+            copy(
+                selectedType = type,
+            )
+        }
+        load(reset = true)
     }
 
     private fun toggleFavorite(propertyId: String) {

@@ -7,6 +7,7 @@ import dev.andyromero.core.result.Result
 import dev.andyromero.data.remote.property.PropertyRemoteDataSourceContract
 import dev.andyromero.data.remote.property.toDomain
 import dev.andyromero.domain.model.Property
+import dev.andyromero.domain.model.PropertyType
 import dev.andyromero.domain.repository.PropertyRepositoryContract
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,13 +21,24 @@ internal class SupabasePropertyRepositoryImpl(
 ) : PropertyRepositoryContract {
     private val propertiesState = MutableStateFlow<List<Property>>(emptyList())
 
-    override suspend fun getProperties(): Result<List<Property>> {
+    override suspend fun getProperties(
+        page: Int,
+        pageSize: Int,
+        type: PropertyType?,
+    ): Result<List<Property>> {
         return withContext(dispatcherProvider.io) {
             try {
-                val data = remoteDataSource.getProperties()
+                val data = remoteDataSource.getProperties(
+                    page = page,
+                    pageSize = pageSize,
+                    type = type,
+                )
                     .map { it.toDomain() }
-
-                propertiesState.value = data
+                propertiesState.value = if (page == 0) {
+                    data
+                } else {
+                    (propertiesState.value + data).distinctBy { it.id }
+                }
                 Result.Success(data)
             } catch (e: Throwable) {
                 logger.e("SupabasePropertyRepositoryImpl", "getProperties failed", e)

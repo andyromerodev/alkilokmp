@@ -49,6 +49,10 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
   - implementación remota `SupabasePropertyRemoteDataSourceImpl`
 - Integración en `MainTabs` reemplazando placeholders de Playa/Favoritas.
 - `PropertyDetail` quedó en versión base para continuar en siguiente iteración.
+- Paginación implementada en `PropertyList`:
+  - consulta paginada por backend (`page`, `pageSize`, `range`)
+  - soporte por tipo en backend (`PropertyType?` en query)
+  - carga incremental al llegar al final de la lista (`LoadNextPage`)
 
 ### 2) Navegación base KMP
 - Creada en `commonMain/navigation`:

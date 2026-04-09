@@ -10,7 +10,7 @@ class GetFavoritePropertiesUseCase(
     private val observeFavoritesUseCase: ObserveFavoritesUseCase,
 ) {
     suspend operator fun invoke(): Result<List<Property>> {
-        return when (val result = propertyRepository.getProperties()) {
+        return when (val result = propertyRepository.getProperties(page = 0, pageSize = 500)) {
             is Result.Success -> {
                 val favorites = observeFavoritesUseCase().first()
                 Result.Success(result.data.filter { property -> favorites.contains(property.id) })
