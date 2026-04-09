@@ -1,6 +1,6 @@
 # CODEX_WORKING_CONTEXT
 
-Última actualización: 2026-04-07
+Última actualización: 2026-04-09
 Proyecto destino: `/Users/andy/AndroidStudioProjects/alkilokmp`
 Proyecto fuente (solo lectura): `/Users/andy/AndroidStudioProjects/AlkiloApp`
 
@@ -13,6 +13,7 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
 3. **Builds/tests los ejecuta Andy manualmente** (Codex no debe correrlos salvo que se pida explícitamente).
 4. **Nada simulado para login/auth**: flujo real con Supabase.
 5. **Arquitectura limpia + SOLID** en KMP.
+6. **Repositorios no llaman SDKs remotos directamente** (Supabase/Ktor/etc.): usan `RemoteDataSourceContract`.
 
 ## Convenciones de arquitectura y nombres
 1. Capas en `commonMain`: `core`, `domain`, `data`, `presentation`, `navigation`, `di`.
@@ -42,8 +43,10 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
 - Añadidos:
   - modelos de dominio `Property`, `PropertyImage`, `PropertyType`
   - contratos de repositorio `PropertyRepositoryContract`, `FavoritesRepositoryContract`
+  - contrato remoto `PropertyRemoteDataSourceContract`
   - use cases de propiedades/favoritos
   - repositorios `SupabasePropertyRepositoryImpl`, `FavoritesRepositoryImpl`
+  - implementación remota `SupabasePropertyRemoteDataSourceImpl`
 - Integración en `MainTabs` reemplazando placeholders de Playa/Favoritas.
 - `PropertyDetail` quedó en versión base para continuar en siguiente iteración.
 
@@ -99,6 +102,8 @@ En `commonMain/di`:
 2. Config Supabase viene de `local.properties`/env, generado a código (`GeneratedSupabaseConfig`).
 3. Se eliminó el ejemplo de `Clock` que era solo didáctico.
 4. Se eliminó el flujo auth antiguo (`AuthViewModel/AuthScreen`) y wrappers Android/iOS viejos.
+5. En data layer, patrón obligatorio: `RepositoryImpl -> Remote/LocalDataSourceContract -> Impl concreta`.
+6. Auditoría 2026-04-09: no quedan repositorios con acceso directo a Supabase/Ktor; `Auth` y `Property` ya pasan por `RemoteDataSourceContract`.
 
 ## Qué no romper en próximas tareas
 1. No reintroducir código Android-only en `commonMain`.
@@ -106,6 +111,7 @@ En `commonMain/di`:
 3. No cambiar convenciones `Contract`/`Impl`.
 4. No saltarse `BaseViewModel` para nuevos ViewModels de presentación compartida.
 5. No hardcodear navegación en `App.kt`; enrutar desde `navigation/NavGraph.kt`.
+6. No mover llamadas `postgrest/auth/storage` a repositorios; mantenerlas en `RemoteDataSourceImpl`.
 
 ## Pendientes inmediatos recomendados
 1. Reemplazar pantallas placeholder de `MainTabs/HostTabs/AdminBookings/CreateBooking` con features reales migradas.

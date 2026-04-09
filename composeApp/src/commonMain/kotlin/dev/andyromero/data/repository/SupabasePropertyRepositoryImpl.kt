@@ -4,19 +4,17 @@ import dev.andyromero.core.dispatcher.DispatcherProvider
 import dev.andyromero.core.error.ErrorMapper
 import dev.andyromero.core.logging.Logger
 import dev.andyromero.core.result.Result
-import dev.andyromero.data.remote.property.PropertyDto
+import dev.andyromero.data.remote.property.PropertyRemoteDataSourceContract
 import dev.andyromero.data.remote.property.toDomain
 import dev.andyromero.domain.model.Property
 import dev.andyromero.domain.repository.PropertyRepositoryContract
-import io.github.jan.supabase.postgrest.Postgrest
-import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 internal class SupabasePropertyRepositoryImpl(
-    private val postgrest: Postgrest,
+    private val remoteDataSource: PropertyRemoteDataSourceContract,
     private val logger: Logger,
     private val dispatcherProvider: DispatcherProvider,
 ) : PropertyRepositoryContract {
@@ -25,16 +23,7 @@ internal class SupabasePropertyRepositoryImpl(
     override suspend fun getProperties(): Result<List<Property>> {
         return withContext(dispatcherProvider.io) {
             try {
-                val data = postgrest.from("properties")
-                    .select(
-                        Columns.raw(
-                            """
-                            *,
-                            property_images (*)
-                            """.trimIndent()
-                        )
-                    )
-                    .decodeList<PropertyDto>()
+                val data = remoteDataSource.getProperties()
                     .map { it.toDomain() }
 
                 propertiesState.value = data

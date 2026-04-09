@@ -17,6 +17,8 @@ import dev.andyromero.data.local.settings.ThemeSettingsStoreContract
 import dev.andyromero.data.local.settings.ThemeSettingsStoreImpl
 import dev.andyromero.data.remote.AuthRemoteDataSourceContract
 import dev.andyromero.data.remote.SupabaseAuthRemoteDataSourceImpl
+import dev.andyromero.data.remote.property.PropertyRemoteDataSourceContract
+import dev.andyromero.data.remote.property.SupabasePropertyRemoteDataSourceImpl
 import dev.andyromero.data.repository.ConfigErrorAuthRepositoryImpl
 import dev.andyromero.data.repository.FavoritesRepositoryImpl
 import dev.andyromero.data.repository.SupabaseAuthRepositoryImpl
@@ -45,6 +47,10 @@ internal val dataModule = module {
             auth = get(),
             postgrest = get(),
         )
+    }
+
+    single<PropertyRemoteDataSourceContract> {
+        SupabasePropertyRemoteDataSourceImpl(postgrest = get())
     }
 
     single<AuthRepositoryContract> {
@@ -91,7 +97,7 @@ internal val dataModule = module {
 
     single<PropertyRepositoryContract> {
         SupabasePropertyRepositoryImpl(
-            postgrest = get(),
+            remoteDataSource = get(),
             logger = get(),
             dispatcherProvider = get(),
         )
