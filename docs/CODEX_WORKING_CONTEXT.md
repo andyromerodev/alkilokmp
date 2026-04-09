@@ -35,6 +35,18 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
 - Ambos heredan de `presentation/base/BaseViewModel.kt`.
 - Login real contra Supabase vía repositorio.
 
+### 1.1) Slice 2 (en progreso)
+- Implementado núcleo funcional de:
+  - `PropertyList` (datos de Supabase + toggle de favoritos)
+  - `Favorites` (lista filtrada por favoritos)
+- Añadidos:
+  - modelos de dominio `Property`, `PropertyImage`, `PropertyType`
+  - contratos de repositorio `PropertyRepositoryContract`, `FavoritesRepositoryContract`
+  - use cases de propiedades/favoritos
+  - repositorios `SupabasePropertyRepositoryImpl`, `FavoritesRepositoryImpl`
+- Integración en `MainTabs` reemplazando placeholders de Playa/Favoritas.
+- `PropertyDetail` quedó en versión base para continuar en siguiente iteración.
+
 ### 2) Navegación base KMP
 - Creada en `commonMain/navigation`:
   - `Routes.kt`

@@ -18,9 +18,17 @@ import androidx.compose.ui.unit.dp
 import dev.andyromero.navigation.Routes
 import dev.andyromero.presentation.components.AlkiloBottomBar
 import dev.andyromero.presentation.components.BottomNavItem
+import dev.andyromero.presentation.favorites.FavoritesScreen
+import dev.andyromero.presentation.favorites.FavoritesViewModel
+import dev.andyromero.presentation.property.list.PropertyListScreen
+import dev.andyromero.presentation.property.list.PropertyListViewModel
+import org.koin.core.Koin
 
 @Composable
-internal fun MainTabsScreen() {
+internal fun MainTabsScreen(
+    koin: Koin,
+    onNavigateToPropertyDetail: (String) -> Unit,
+) {
     val items = remember {
         listOf(
             BottomNavItem(label = "Playa", route = Routes.BeachList),
@@ -29,6 +37,9 @@ internal fun MainTabsScreen() {
         )
     }
     var tabRoute by remember { mutableStateOf<Routes>(Routes.BeachList) }
+
+    val propertyListViewModel = remember { koin.get<PropertyListViewModel>() }
+    val favoritesViewModel = remember { koin.get<FavoritesViewModel>() }
 
     Scaffold(
         bottomBar = {
@@ -40,38 +51,32 @@ internal fun MainTabsScreen() {
         },
     ) { paddingValues ->
         when (tabRoute) {
-            Routes.BeachList -> TabPlaceholderScreen(
-                modifier = Modifier.padding(paddingValues),
-                title = "Property List",
-                subtitle = "Main tabs / beach list",
+            Routes.BeachList -> PropertyListScreen(
+                viewModel = propertyListViewModel,
+                onNavigateToDetail = onNavigateToPropertyDetail,
+                onShowMessage = { },
             )
 
-            Routes.Favorites -> TabPlaceholderScreen(
-                modifier = Modifier.padding(paddingValues),
-                title = "Favoritas",
-                subtitle = "Slice 2: pending migration",
+            Routes.Favorites -> FavoritesScreen(
+                viewModel = favoritesViewModel,
+                onNavigateToDetail = onNavigateToPropertyDetail,
+                onShowMessage = { },
             )
 
-            Routes.Settings -> TabPlaceholderScreen(
+            Routes.Settings -> SettingsTabPlaceholder(
                 modifier = Modifier.padding(paddingValues),
-                title = "Settings",
-                subtitle = "Slice 1 done, settings pending",
             )
 
-            else -> TabPlaceholderScreen(
+            else -> SettingsTabPlaceholder(
                 modifier = Modifier.padding(paddingValues),
-                title = "Main",
-                subtitle = "Unknown tab",
             )
         }
     }
 }
 
 @Composable
-private fun TabPlaceholderScreen(
+private fun SettingsTabPlaceholder(
     modifier: Modifier = Modifier,
-    title: String,
-    subtitle: String,
 ) {
     Column(
         modifier = modifier
@@ -80,10 +85,10 @@ private fun TabPlaceholderScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = title, style = MaterialTheme.typography.headlineMedium)
+        Text(text = "Settings", style = MaterialTheme.typography.headlineMedium)
         Text(
             modifier = Modifier.padding(top = 8.dp),
-            text = subtitle,
+            text = "Slice pendiente",
             style = MaterialTheme.typography.bodyMedium,
         )
     }

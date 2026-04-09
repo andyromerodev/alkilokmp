@@ -18,9 +18,13 @@ import dev.andyromero.data.local.settings.ThemeSettingsStoreImpl
 import dev.andyromero.data.remote.AuthRemoteDataSourceContract
 import dev.andyromero.data.remote.SupabaseAuthRemoteDataSourceImpl
 import dev.andyromero.data.repository.ConfigErrorAuthRepositoryImpl
+import dev.andyromero.data.repository.FavoritesRepositoryImpl
 import dev.andyromero.data.repository.SupabaseAuthRepositoryImpl
+import dev.andyromero.data.repository.SupabasePropertyRepositoryImpl
 import dev.andyromero.data.repository.ThemeRepositoryImpl
 import dev.andyromero.domain.repository.AuthRepositoryContract
+import dev.andyromero.domain.repository.FavoritesRepositoryContract
+import dev.andyromero.domain.repository.PropertyRepositoryContract
 import dev.andyromero.domain.repository.ThemeRepositoryContract
 import org.koin.dsl.module
 
@@ -79,5 +83,17 @@ internal val dataModule = module {
 
     single<ThemeRepositoryContract> {
         ThemeRepositoryImpl(store = get())
+    }
+
+    single<FavoritesRepositoryContract> {
+        FavoritesRepositoryImpl(store = get())
+    }
+
+    single<PropertyRepositoryContract> {
+        SupabasePropertyRepositoryImpl(
+            postgrest = get(),
+            logger = get(),
+            dispatcherProvider = get(),
+        )
     }
 }
