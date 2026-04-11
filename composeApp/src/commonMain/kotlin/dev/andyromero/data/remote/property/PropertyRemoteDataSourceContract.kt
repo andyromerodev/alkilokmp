@@ -8,4 +8,6 @@ internal interface PropertyRemoteDataSourceContract {
         pageSize: Int,
         type: PropertyType?,
     ): List<PropertyDto>
+
+    suspend fun getPropertyById(id: String): PropertyDto
 }

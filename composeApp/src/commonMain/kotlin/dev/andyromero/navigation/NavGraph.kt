@@ -27,6 +27,7 @@ import dev.andyromero.domain.usecase.auth.RestoreSessionUseCase
 import dev.andyromero.presentation.host.HostTabsScreen
 import dev.andyromero.presentation.main.MainTabsScreen
 import dev.andyromero.presentation.property.detail.PropertyDetailScreen
+import dev.andyromero.presentation.property.detail.PropertyDetailViewModel
 import kotlinx.coroutines.flow.map
 import org.koin.core.Koin
 import org.koin.core.parameter.parametersOf
@@ -152,13 +153,21 @@ internal fun AlkiloNavGraph(
 
         is Routes.PropertyDetail -> {
             val currentRoute = route as Routes.PropertyDetail
+            val propertyDetailViewModel = remember(currentRoute.propertyId) {
+                koin.get<PropertyDetailViewModel> {
+                    parametersOf(currentRoute.propertyId)
+                }
+            }
             PropertyDetailScreen(
-                propertyId = currentRoute.propertyId,
+                viewModel = propertyDetailViewModel,
                 onNavigateBack = {
                     route = Routes.MainTabs
                 },
                 onNavigateToBooking = { propertyId ->
                     route = Routes.CreateBooking(propertyId)
+                },
+                onShowMessage = { message ->
+                    println("⚠️ [PropertyDetail] $message")
                 },
             )
         }

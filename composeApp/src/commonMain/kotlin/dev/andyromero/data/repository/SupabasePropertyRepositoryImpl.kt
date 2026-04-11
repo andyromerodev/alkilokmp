@@ -47,5 +47,17 @@ internal class SupabasePropertyRepositoryImpl(
         }
     }
 
+    override suspend fun getPropertyById(id: String): Result<Property> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val property = remoteDataSource.getPropertyById(id).toDomain()
+                Result.Success(property)
+            } catch (e: Throwable) {
+                logger.e("SupabasePropertyRepositoryImpl", "getPropertyById failed for id=$id", e)
+                Result.Error(ErrorMapper.mapException(e))
+            }
+        }
+    }
+
     override fun observeProperties(): Flow<List<Property>> = propertiesState.asStateFlow()
 }

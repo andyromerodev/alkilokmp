@@ -12,5 +12,7 @@ interface PropertyRepositoryContract {
         type: PropertyType? = null,
     ): Result<List<Property>>
 
+    suspend fun getPropertyById(id: String): Result<Property>
+
     fun observeProperties(): Flow<List<Property>>
 }

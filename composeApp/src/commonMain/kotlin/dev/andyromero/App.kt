@@ -1,12 +1,12 @@
 package dev.andyromero
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
 import dev.andyromero.di.initKoinIfNeeded
 import dev.andyromero.navigation.AlkiloNavGraph
 import dev.andyromero.navigation.Routes
+import dev.andyromero.presentation.theme.AlkiloTheme
 import org.koin.mp.KoinPlatform
 
 @Composable
@@ -21,7 +21,7 @@ fun App() {
     }
     println("🔵 [App] koin ready — composing NavGraph")
 
-    MaterialTheme {
+    AlkiloTheme {
         AlkiloNavGraph(
             koin = koin,
             startDestination = Routes.Splash,

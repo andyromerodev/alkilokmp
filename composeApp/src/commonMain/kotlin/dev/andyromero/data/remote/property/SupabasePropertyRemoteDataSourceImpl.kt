@@ -50,4 +50,28 @@ internal class SupabasePropertyRemoteDataSourceImpl(
         logger.d(TAG, "getProperties success count=${result.size}")
         return result
     }
+
+    override suspend fun getPropertyById(id: String): PropertyDto {
+        logger.d(TAG, "getPropertyById request id=$id")
+        val response = postgrest.from("properties")
+            .select(
+                columns = Columns.raw(
+                    """
+                    *,
+                    property_images (*)
+                    """.trimIndent()
+                )
+            ) {
+                filter {
+                    eq("id", id)
+                    eq("is_active", true)
+                }
+                range(0, 0)
+            }
+        val result = json.decodeFromString<List<PropertyDto>>(response.data)
+            .firstOrNull()
+            ?: error("Property not found for id=$id")
+        logger.d(TAG, "getPropertyById success id=$id")
+        return result
+    }
 }

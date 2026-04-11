@@ -36,7 +36,7 @@ internal class FavoritesViewModel(
     private fun load() {
         launch {
             setState { copy(isLoading = true, errorMessage = null) }
-            when (val result = getPropertiesUseCase()) {
+            when (val result = getPropertiesUseCase(page = 0, pageSize = 100)) {
                 is Result.Success -> {
                     setState {
                         copy(

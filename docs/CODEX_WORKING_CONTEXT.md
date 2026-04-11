@@ -1,6 +1,6 @@
 # CODEX_WORKING_CONTEXT
 
-Última actualización: 2026-04-09 (UI session)
+Última actualización: 2026-04-10 (Slice 2.1 PropertyDetail)
 Proyecto destino: `/Users/andy/AndroidStudioProjects/alkilokmp`
 Proyecto fuente (solo lectura): `/Users/andy/AndroidStudioProjects/AlkiloApp`
 
@@ -53,6 +53,17 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
   - consulta paginada por backend (`page`, `pageSize`, `range`)
   - soporte por tipo en backend (`PropertyType?` en query)
   - carga incremental al llegar al final de la lista (`LoadNextPage`)
+
+### 1.2) Slice 2.1 (completado) — PropertyDetail real
+- Implementado detalle de propiedad end-to-end en `commonMain`:
+  - `PropertyRemoteDataSourceContract.getPropertyById(id)` + `SupabasePropertyRemoteDataSourceImpl`
+  - `PropertyRepositoryContract.getPropertyById(id)` + `SupabasePropertyRepositoryImpl`
+  - `GetPropertyByIdUseCase`
+  - MVI completo: `PropertyDetailState/Intent/Effect/ViewModel` (heredando `BaseViewModel`)
+  - `PropertyDetailScreen` funcional (loading/error/content, imágenes, descripción, amenities, CTA reservar)
+- Navegación conectada en `NavGraph` con Koin parameters:
+  - `PropertyDetailViewModel` se resuelve con `parametersOf(propertyId)`.
+- Se conserva e integra el cambio local existente en `FavoritesViewModel` (page size de carga local ajustado por trabajo paralelo de Claude).
 
 ### 2) Navegación base KMP
 - Creada en `commonMain/navigation`:
@@ -108,6 +119,7 @@ En `commonMain/di`:
 4. Se eliminó el flujo auth antiguo (`AuthViewModel/AuthScreen`) y wrappers Android/iOS viejos.
 5. En data layer, patrón obligatorio: `RepositoryImpl -> Remote/LocalDataSourceContract -> Impl concreta`.
 6. Auditoría 2026-04-09: no quedan repositorios con acceso directo a Supabase/Ktor; `Auth` y `Property` ya pasan por `RemoteDataSourceContract`.
+7. `PropertyDetail` ahora sigue el mismo patrón de Clean Architecture que `PropertyList`: acceso remoto solo vía `PropertyRemoteDataSourceContract`.
 
 ## Decisiones de UI/Presentación (2026-04-09)
 
