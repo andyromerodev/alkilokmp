@@ -162,10 +162,22 @@ internal fun PropertyListScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = state.errorMessage ?: "No hay propiedades disponibles con ese filtro",
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = if (state.errorMessage != null) "No se pudo cargar" else "Sin resultados",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = state.errorMessage
+                                ?: "Prueba con otro filtro o término de búsqueda",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
 
@@ -176,7 +188,7 @@ internal fun PropertyListScreen(
                         top = 8.dp,
                         bottom = 8.dp + contentPadding.calculateBottomPadding(),
                     ),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalArrangement = Arrangement.spacedBy(0.dp),
                 ) {
                     items(filteredProperties, key = { it.id }) { property ->
                         PropertyCard(
@@ -248,7 +260,7 @@ private fun SearchHeader(
                         modifier = Modifier.size(14.dp),
                     )
                     Text(
-                        text = "Playa del Carmen, Quintana Roo",
+                        text = "Cuba",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
