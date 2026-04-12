@@ -1,6 +1,13 @@
 package dev.andyromero.presentation.property.list
 
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,13 +26,17 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.andyromero.domain.model.Property
 import dev.andyromero.presentation.components.ErrorState
@@ -33,7 +44,7 @@ import dev.andyromero.presentation.property.list.components.PropertyCard
 import dev.andyromero.presentation.property.list.components.PropertyCardShimmer
 import dev.andyromero.presentation.property.list.components.SearchHeader
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PropertyListScreen(
     viewModel: PropertyListViewModel,
@@ -46,6 +57,9 @@ internal fun PropertyListScreen(
     var query by rememberSaveable { mutableStateOf("") }
     val listState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
+    val density = LocalDensity.current
+    var headerHeightPx by remember { mutableStateOf(0) }
+    val headerHeight by remember { derivedStateOf { with(density) { headerHeightPx.toDp() } } }
 
     LaunchedEffect(viewModel.effects) {
         viewModel.effects.collect { effect ->
@@ -58,6 +72,12 @@ internal fun PropertyListScreen(
     }
 
     val filteredProperties = state.properties.filterByQuery(query)
+
+    val isHeaderVisible by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset < 10
+        }
+    }
 
     // Paging trigger
     LaunchedEffect(
@@ -93,25 +113,13 @@ internal fun PropertyListScreen(
                     onRefresh = { viewModel.sendIntent(PropertyListIntent.RetryLoad) },
                 ),
             contentPadding = PaddingValues(
-                top = contentPadding.calculateTopPadding(),
+                top = contentPadding.calculateTopPadding() + headerHeight,
                 bottom = contentPadding.calculateBottomPadding(),
             ),
         ) {
-            stickyHeader {
-                SearchHeader(
-                    userName = userName,
-                    query = query,
-                    onQueryChange = { query = it },
-                    selectedType = state.selectedType,
-                    onSelectType = { viewModel.sendIntent(PropertyListIntent.SelectType(it)) },
-                )
-            }
-
             when {
                 state.isLoading && state.properties.isEmpty() -> {
-                    items(3) {
-                        PropertyCardShimmer()
-                    }
+                    items(3) { PropertyCardShimmer() }
                 }
 
                 state.errorMessage != null && state.properties.isEmpty() -> {
@@ -166,6 +174,27 @@ internal fun PropertyListScreen(
                     }
                 }
             }
+        }
+
+        AnimatedVisibility(
+            visible = isHeaderVisible,
+            enter = slideInVertically(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium,
+                ),
+            ) { -it } + fadeIn(tween(200)),
+            exit = slideOutVertically(tween(180)) { -it } + fadeOut(tween(150)),
+            modifier = Modifier.align(Alignment.TopStart),
+        ) {
+            SearchHeader(
+                userName = userName,
+                query = query,
+                onQueryChange = { query = it },
+                selectedType = state.selectedType,
+                onSelectType = { viewModel.sendIntent(PropertyListIntent.SelectType(it)) },
+                modifier = Modifier.onSizeChanged { headerHeightPx = it.height },
+            )
         }
 
         PullToRefreshDefaults.Indicator(
