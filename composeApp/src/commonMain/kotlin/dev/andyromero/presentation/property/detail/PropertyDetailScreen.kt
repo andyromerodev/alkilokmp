@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedAssistChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -79,15 +78,7 @@ internal fun PropertyDetailScreen(
     ) { paddingValues ->
         when {
             state.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(BeigeBackground)
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
+                PropertyDetailShimmer(contentPadding = paddingValues)
             }
 
             state.property == null -> {
