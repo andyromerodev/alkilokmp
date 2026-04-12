@@ -18,6 +18,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,16 +26,19 @@ import androidx.compose.ui.unit.dp
 import dev.andyromero.domain.usecase.auth.ObserveCurrentProfileUseCase
 import dev.andyromero.navigation.Routes
 import dev.andyromero.presentation.components.AlkiloBottomBar
+import dev.andyromero.presentation.components.AppSnackbarManager
 import dev.andyromero.presentation.components.BottomNavItem
 import dev.andyromero.presentation.favorites.FavoritesScreen
 import dev.andyromero.presentation.favorites.FavoritesViewModel
 import dev.andyromero.presentation.property.list.PropertyListScreen
 import dev.andyromero.presentation.property.list.PropertyListViewModel
+import kotlinx.coroutines.launch
 import org.koin.core.Koin
 
 @Composable
 internal fun MainTabsScreen(
     koin: Koin,
+    snackbarManager: AppSnackbarManager,
     onNavigateToPropertyDetail: (String) -> Unit,
 ) {
     val items = remember {
@@ -50,11 +54,18 @@ internal fun MainTabsScreen(
     val propertyListViewModel = remember { koin.get<PropertyListViewModel>() }
     val favoritesViewModel = remember { koin.get<FavoritesViewModel>() }
     val observeProfile = remember { koin.get<ObserveCurrentProfileUseCase>() }
+    val scope = rememberCoroutineScope()
 
     var firstName by remember { mutableStateOf("") }
     LaunchedEffect(Unit) {
         observeProfile().collect { profile ->
             firstName = profile?.fullName?.split(" ")?.firstOrNull().orEmpty()
+        }
+    }
+
+    val onShowMessage: (String) -> Unit = { message ->
+        scope.launch {
+            snackbarManager.show(text = message)
         }
     }
 
@@ -72,7 +83,7 @@ internal fun MainTabsScreen(
             Routes.BeachList -> PropertyListScreen(
                 viewModel = propertyListViewModel,
                 onNavigateToDetail = onNavigateToPropertyDetail,
-                onShowMessage = {},
+                onShowMessage = onShowMessage,
                 userName = firstName,
                 contentPadding = paddingValues,
             )
@@ -80,7 +91,7 @@ internal fun MainTabsScreen(
             Routes.Favorites -> FavoritesScreen(
                 viewModel = favoritesViewModel,
                 onNavigateToDetail = onNavigateToPropertyDetail,
-                onShowMessage = {},
+                onShowMessage = onShowMessage,
                 contentPadding = paddingValues,
             )
 

@@ -25,6 +25,7 @@ internal class PropertyListViewModel(
         when (intent) {
             PropertyListIntent.LoadInitial -> load(reset = true)
             PropertyListIntent.LoadNextPage -> load(reset = false)
+            PropertyListIntent.RetryLoad -> load(reset = true)
             is PropertyListIntent.SelectType -> selectType(intent.type)
             is PropertyListIntent.ToggleFavorite -> toggleFavorite(intent.propertyId)
             is PropertyListIntent.OpenProperty -> emitEffect(PropertyListEffect.NavigateToPropertyDetail(intent.propertyId))
@@ -70,12 +71,12 @@ internal class PropertyListViewModel(
                 is Result.Success -> {
                     val loaded = result.data
                     val hasMore = loaded.size >= PAGE_SIZE
+                    val merged = if (reset) {
+                        loaded
+                    } else {
+                        (currentState.properties + loaded).distinctBy { it.id }
+                    }
                     setState {
-                        val merged = if (reset) {
-                            loaded
-                        } else {
-                            (properties + loaded).distinctBy { it.id }
-                        }
                         copy(
                             isLoading = false,
                             isPaging = false,
@@ -84,6 +85,9 @@ internal class PropertyListViewModel(
                             nextPage = if (hasMore) pageToLoad + 1 else pageToLoad,
                             errorMessage = null,
                         )
+                    }
+                    if (reset && merged.isNotEmpty()) {
+                        emitEffect(PropertyListEffect.ShowSuccess("Lista actualizada"))
                     }
                 }
 
