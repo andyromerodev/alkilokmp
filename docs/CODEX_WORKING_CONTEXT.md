@@ -1,6 +1,6 @@
 # CODEX_WORKING_CONTEXT
 
-Última actualización: 2026-04-10 (Slice 2.1 PropertyDetail)
+Última actualización: 2026-04-12 (UI Polish — Shimmer, Snackbar, ErrorState compartido)
 Proyecto destino: `/Users/andy/AndroidStudioProjects/alkilokmp`
 Proyecto fuente (solo lectura): `/Users/andy/AndroidStudioProjects/AlkiloApp`
 
@@ -53,6 +53,31 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
   - consulta paginada por backend (`page`, `pageSize`, `range`)
   - soporte por tipo en backend (`PropertyType?` en query)
   - carga incremental al llegar al final de la lista (`LoadNextPage`)
+
+### 1.3) Slice 2.2 (completado) — UI Polish: shimmer, snackbar, ErrorState compartido
+
+#### Componentes compartidos nuevos en `presentation/components/`
+- **`ShimmerEffect.kt`**: `Modifier.shimmerEffect()` extraído como extensión pública compartida.  
+  - Antes estaba duplicado como `internal` en `list/components/PropertyCardShimmer.kt`.
+  - Ahora cualquier pantalla puede importarlo desde `presentation.components`.
+- **`ErrorState.kt`**: composable movido desde `list/components/` a `presentation/components/` y hecho público.  
+  - Parámetros: `message`, `onRetry`, `modifier`, `icon: DrawableResource?`.  
+  - Usado tanto en `PropertyListScreen` como en `PropertyDetailScreen`.
+- **`AppSnackbarHost.kt`**: host de snackbar personalizado con `SnackbarManager` wired en `NavGraph`.
+
+#### PropertyDetailScreen — estado de carga
+- `CircularProgressIndicator` reemplazado por **`PropertyDetailShimmer`** (skeleton completo).
+- `PropertyDetailShimmer` en `presentation/property/detail/PropertyDetailShimmer.kt`:
+  - `LazyColumn` que replica el layout exacto del contenido real: hero image, chip de tipo, título (2 líneas), dirección, rating/precio, descripción (3 líneas), amenities (LazyRow), stat chips, host card, mapa placeholder.
+  - Usa `shimmerEffect()` compartido; recibe `contentPadding: PaddingValues` igual que `PropertyDetailContent`.
+- Estado de error usa `ErrorState` compartido con retry vía `PropertyDetailIntent.Load`.
+
+#### PropertyListScreen — refactor de componentes
+- `SearchHeader` extraído a `list/components/SearchHeader.kt`.
+- `ErrorState` extraído a `presentation/components/ErrorState.kt` (compartido).
+- `PropertyCardShimmer` actualizado para importar `shimmerEffect` desde `presentation/components`.
+- Nuevos intents/effects para búsqueda y filtros en `PropertyListIntent` y `PropertyListEffect`.
+- `NavGraph` conecta `AppSnackbarHost` y `SnackbarManager`; `MainTabsScreen` pasa callbacks de snackbar.
 
 ### 1.2) Slice 2.1 (completado) — PropertyDetail real
 - Implementado detalle de propiedad end-to-end en `commonMain`:
@@ -138,6 +163,12 @@ En `commonMain/di`:
 - Items con `weight(1f)` para distribución uniforme.
 - `BottomNavItem` tiene campo `icon: ImageVector` obligatorio — siempre proveer ícono al instanciar.
 
+### Componentes compartidos en `presentation/components/`
+- **`ShimmerEffect.kt`**: `Modifier.shimmerEffect()` — animación brush linear con `FastOutSlowInEasing`, 1500ms. Usar siempre este en lugar de re-implementar.
+- **`ErrorState.kt`**: columna centrada con icono opcional, mensaje y botón "Reintentar". Usar en toda pantalla con estado de error que permita retry.
+- **`AppSnackbarHost.kt`**: host + manager de snackbars globales. Wired en `NavGraph`; las screens reciben `onShowMessage: (String) -> Unit`.
+- **Regla**: antes de crear un componente de estado (shimmer, error, vacío) en un feature, verificar si ya existe en `presentation/components/` y reutilizarlo.
+
 ### SearchHeader en PropertyListScreen
 - Extraído como composable privado `SearchHeader(userName, query, onQueryChange, selectedType, onSelectType)`.
 - Muestra greeting `"Hola, $userName 👋"` + fila de ubicación si `userName` no está vacío; de lo contrario muestra `"Explorar propiedades"`.
@@ -155,12 +186,16 @@ En `commonMain/di`:
 6. No mover llamadas `postgrest/auth/storage` a repositorios; mantenerlas en `RemoteDataSourceImpl`.
 7. No añadir `Scaffold` dentro de screens que viven como tabs en `MainTabsScreen` o `HostTabsScreen`; usar patrón `contentPadding: PaddingValues`.
 8. No instanciar `BottomNavItem` sin `icon`; campo obligatorio desde 2026-04-09.
+9. No reimplementar `shimmerEffect` ni `ErrorState` en features individuales; importar desde `presentation/components/`.
+10. No usar `CircularProgressIndicator` como estado de carga en pantallas completas; usar skeleton shimmer que refleje el layout real.
 
 ## Pendientes inmediatos recomendados
 1. Reemplazar pantallas placeholder de `MainTabs/HostTabs/AdminBookings/CreateBooking` con features reales migradas.
 2. Migrar `Favorites`, `Settings`, `Properties`, `Bookings` por slices.
 3. Implementar almacenamiento real en JS/Wasm (localStorage).
 4. Añadir mappers de `hostcache` <-> dominio cuando se migren slices 2 y 3.
+5. Crear `FavoritesShimmer` siguiendo el mismo patrón que `PropertyDetailShimmer` cuando se migre `Favorites`.
+6. Conectar retry real en `PropertyListViewModel` cuando falla la carga inicial (actualmente solo muestra `ErrorState`).
 
 ## Próximas tareas (plan operativo)
 
