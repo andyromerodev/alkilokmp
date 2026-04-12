@@ -28,7 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.andyromero.domain.model.Property
-import dev.andyromero.presentation.property.list.components.ErrorState
+import dev.andyromero.presentation.components.ErrorState
 import dev.andyromero.presentation.property.list.components.PropertyCard
 import dev.andyromero.presentation.property.list.components.PropertyCardShimmer
 import dev.andyromero.presentation.property.list.components.SearchHeader

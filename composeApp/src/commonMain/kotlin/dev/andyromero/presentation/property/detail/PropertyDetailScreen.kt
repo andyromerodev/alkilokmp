@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
 import coil3.compose.AsyncImage
 import dev.andyromero.domain.model.Property
+import dev.andyromero.presentation.components.ErrorState
 import dev.andyromero.presentation.components.rememberNetworkImageLoader
 
 @Composable
@@ -89,9 +90,9 @@ internal fun PropertyDetailScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = state.errorMessage ?: "No se pudo cargar la propiedad",
-                        style = MaterialTheme.typography.bodyLarge,
+                    ErrorState(
+                        message = state.errorMessage ?: "No se pudo cargar la propiedad",
+                        onRetry = { viewModel.sendIntent(PropertyDetailIntent.Load) },
                     )
                 }
             }
