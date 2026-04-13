@@ -42,5 +42,12 @@
 
 ---
 
+## Session Tools (always active)
+
+- **context-mode** — routes large-output commands (build, tests, git log, grep, APIs) through sandbox. Only summaries enter context. Saves 60–90% tokens. Automatic via hooks. Use `ctx_execute`/`ctx_execute_file` instead of Bash for anything that reads/lists/analyzes data.
+- **claude-mem** — persists observations across sessions. Worker at `http://localhost:37777`. Use MCP tools `search`/`get_observations`/`timeline` to query project history before implementing features. See `docs/CONTEXT_MODE_GUIDE.md`.
+
+---
+
 Para detalles completos del design system, ver `.impeccable.md`
 Para contexto de arquitectura y desarrollo, ver `docs/CODEX_WORKING_CONTEXT.md`

@@ -1,6 +1,6 @@
 # CODEX_WORKING_CONTEXT
 
-Última actualización: 2026-04-12 (UI Polish — Shimmer, Snackbar, ErrorState compartido)
+Última actualización: 2026-04-12 (Consistencia Slice 2 + roadmap actualizado)
 Proyecto destino: `/Users/andy/AndroidStudioProjects/alkilokmp`
 Proyecto fuente (solo lectura): `/Users/andy/AndroidStudioProjects/AlkiloApp`
 
@@ -14,6 +14,9 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
 4. **Nada simulado para login/auth**: flujo real con Supabase.
 5. **Arquitectura limpia + SOLID** en KMP.
 6. **Repositorios no llaman SDKs remotos directamente** (Supabase/Ktor/etc.): usan `RemoteDataSourceContract`.
+7. **Base de migración funcional**: usar como guía las implementaciones ya existentes en `/Users/andy/AndroidStudioProjects/AlkiloApp` (solo lectura), adaptándolas a KMP en `alkilokmp`.
+8. **Uso obligatorio de skills KMP en cada tarea**: aplicar siempre los skills de KMP para mantener Clean Architecture + SOLID (mínimo `kmp-clean-architecture`; además `kmp-koin-di`, `kmp-mvi-compose`, `kmp-expect-actual`, `kmp-supabase-multiplatform` según corresponda).
+9. **Trabajo UI/UX obligatorio con Impeccable**: para cambios de diseño/presentación usar skill `impeccable` y respetar la guía de `docs/IMPECCABLE_SKILLS.md`.
 
 ## Convenciones de arquitectura y nombres
 1. Capas en `commonMain`: `core`, `domain`, `data`, `presentation`, `navigation`, `di`.
@@ -36,7 +39,7 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
 - Ambos heredan de `presentation/base/BaseViewModel.kt`.
 - Login real contra Supabase vía repositorio.
 
-### 1.1) Slice 2 (en progreso)
+### 1.1) Slice 2 (parcialmente completado)
 - Implementado núcleo funcional de:
   - `PropertyList` (datos de Supabase + toggle de favoritos)
   - `Favorites` (lista filtrada por favoritos)
@@ -48,11 +51,24 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
   - repositorios `SupabasePropertyRepositoryImpl`, `FavoritesRepositoryImpl`
   - implementación remota `SupabasePropertyRemoteDataSourceImpl`
 - Integración en `MainTabs` reemplazando placeholders de Playa/Favoritas.
-- `PropertyDetail` quedó en versión base para continuar en siguiente iteración.
 - Paginación implementada en `PropertyList`:
   - consulta paginada por backend (`page`, `pageSize`, `range`)
   - soporte por tipo en backend (`PropertyType?` en query)
   - carga incremental al llegar al final de la lista (`LoadNextPage`)
+- Estado actual del Slice 2:
+  - **Completado**: `PropertyList` real, `Favorites` funcional base, `PropertyDetail` real, navegación a detalle y flujo de reserva desde detalle.
+  - **Pendiente de cierre UX**: parity visual/estados de `Favorites` con `PropertyList/PropertyDetail` y consolidación de retries/snackbar.
+
+### 1.2) Slice 2.1 (completado) — PropertyDetail real
+- Implementado detalle de propiedad end-to-end en `commonMain`:
+  - `PropertyRemoteDataSourceContract.getPropertyById(id)` + `SupabasePropertyRemoteDataSourceImpl`
+  - `PropertyRepositoryContract.getPropertyById(id)` + `SupabasePropertyRepositoryImpl`
+  - `GetPropertyByIdUseCase`
+  - MVI completo: `PropertyDetailState/Intent/Effect/ViewModel` (heredando `BaseViewModel`)
+  - `PropertyDetailScreen` funcional (loading/error/content, imágenes, descripción, amenities, CTA reservar)
+- Navegación conectada en `NavGraph` con Koin parameters:
+  - `PropertyDetailViewModel` se resuelve con `parametersOf(propertyId)`.
+- Se conserva e integra el cambio local existente en `FavoritesViewModel` (page size de carga local ajustado por trabajo paralelo de Claude).
 
 ### 1.3) Slice 2.2 (completado) — UI Polish: shimmer, snackbar, ErrorState compartido
 
@@ -78,17 +94,6 @@ Mantener un historial operativo y reglas obligatorias para que cada nueva tarea 
 - `PropertyCardShimmer` actualizado para importar `shimmerEffect` desde `presentation/components`.
 - Nuevos intents/effects para búsqueda y filtros en `PropertyListIntent` y `PropertyListEffect`.
 - `NavGraph` conecta `AppSnackbarHost` y `SnackbarManager`; `MainTabsScreen` pasa callbacks de snackbar.
-
-### 1.2) Slice 2.1 (completado) — PropertyDetail real
-- Implementado detalle de propiedad end-to-end en `commonMain`:
-  - `PropertyRemoteDataSourceContract.getPropertyById(id)` + `SupabasePropertyRemoteDataSourceImpl`
-  - `PropertyRepositoryContract.getPropertyById(id)` + `SupabasePropertyRepositoryImpl`
-  - `GetPropertyByIdUseCase`
-  - MVI completo: `PropertyDetailState/Intent/Effect/ViewModel` (heredando `BaseViewModel`)
-  - `PropertyDetailScreen` funcional (loading/error/content, imágenes, descripción, amenities, CTA reservar)
-- Navegación conectada en `NavGraph` con Koin parameters:
-  - `PropertyDetailViewModel` se resuelve con `parametersOf(propertyId)`.
-- Se conserva e integra el cambio local existente en `FavoritesViewModel` (page size de carga local ajustado por trabajo paralelo de Claude).
 
 ### 2) Navegación base KMP
 - Creada en `commonMain/navigation`:
@@ -188,28 +193,28 @@ En `commonMain/di`:
 8. No instanciar `BottomNavItem` sin `icon`; campo obligatorio desde 2026-04-09.
 9. No reimplementar `shimmerEffect` ni `ErrorState` en features individuales; importar desde `presentation/components/`.
 10. No usar `CircularProgressIndicator` como estado de carga en pantallas completas; usar skeleton shimmer que refleje el layout real.
+11. No implementar UI nueva sin revisar `docs/IMPECCABLE_SKILLS.md` y sin aplicar lineamientos de `impeccable`.
 
 ## Pendientes inmediatos recomendados
-1. Reemplazar pantallas placeholder de `MainTabs/HostTabs/AdminBookings/CreateBooking` con features reales migradas.
-2. Migrar `Favorites`, `Settings`, `Properties`, `Bookings` por slices.
-3. Implementar almacenamiento real en JS/Wasm (localStorage).
-4. Añadir mappers de `hostcache` <-> dominio cuando se migren slices 2 y 3.
-5. Crear `FavoritesShimmer` siguiendo el mismo patrón que `PropertyDetailShimmer` cuando se migre `Favorites`.
-6. Conectar retry real en `PropertyListViewModel` cuando falla la carga inicial (actualmente solo muestra `ErrorState`).
+1. Completar `Favorites` con el mismo nivel de polish de estados (`shimmer/retry/snackbar`) y layout final.
+2. Crear `FavoritesShimmer` siguiendo el mismo patrón que `PropertyDetailShimmer`.
+3. Conectar retry real en `PropertyListViewModel` y `FavoritesViewModel` cuando falla la carga inicial.
+4. Migrar pantallas placeholder restantes de `HostTabs/AdminBookings/CreateBooking` con features reales.
+5. Implementar almacenamiento real en JS/Wasm (localStorage).
+6. Añadir mappers de `hostcache` <-> dominio cuando se migren slices 3 y 4.
 
 ## Próximas tareas (plan operativo)
 
 ### Prioridad alta (siguiente bloque)
-1. **Slice 2: Properties + Favorites**
-   - Migrar `PropertyList`, `PropertyDetail` y `Favorites` desde `AlkiloApp` a `commonMain`.
-   - Crear contratos/repos/use-cases faltantes para propiedades/favoritos.
-   - Conectar rutas reales en `NavGraph` reemplazando placeholders de `MainTabs`.
-2. **Navegación real de tabs**
-   - Mantener `Routes` como fuente única de verdad.
-   - Implementar navegación de tabs (main y host) sin perder estado de pantalla.
-3. **Settings + Theme**
+1. **Slice 2: cierre de UX en cliente (pendiente final)**
+   - Cerrar parity de `Favorites` con `PropertyList/PropertyDetail` en estados de carga/error/vacío.
+   - Completar retry inicial y snackbars de error/éxito consistentes en cliente.
+2. **Settings + Theme**
    - Migrar pantalla de settings y flujo de cambio de tema usando `ThemeRepositoryContract`.
    - Persistir elección de tema en store local ya implementado.
+3. **Navegación real de tabs**
+   - Mantener `Routes` como fuente única de verdad.
+   - Validar navegación de tabs (main y host) sin perder estado de pantalla al cambiar tab.
 
 ### Prioridad media
 1. **Slice 3: Bookings + Host**
@@ -238,6 +243,8 @@ En `commonMain/di`:
 ## Checklist para cada nueva tarea
 1. Confirmar si es **solo alkilokmp**.
 2. Revisar este archivo antes de editar.
-3. Mantener capas y nombres (`Contract`/`Impl`).
-4. Si afecta auth/startup, validar flujo Splash -> role route.
-5. Documentar al final cambios en este mismo archivo (append o actualización de secciones).
+3. Aplicar skill KMP correspondiente (obligatorio `kmp-clean-architecture`; sumar `kmp-koin-di`, `kmp-mvi-compose`, `kmp-expect-actual`, `kmp-supabase-multiplatform` según tarea).
+4. Si hay UI/presentación, aplicar `impeccable` + validar contra `docs/IMPECCABLE_SKILLS.md`.
+5. Mantener capas y nombres (`Contract`/`Impl`).
+6. Si afecta auth/startup, validar flujo Splash -> role route.
+7. Documentar al final cambios en este mismo archivo (append o actualización de secciones).
