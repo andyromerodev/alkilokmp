@@ -10,4 +10,10 @@ internal interface PropertyRemoteDataSourceContract {
     ): List<PropertyDto>
 
     suspend fun getPropertyById(id: String): PropertyDto
+
+    suspend fun getPropertyAvailability(
+        propertyId: String,
+        startDate: String,
+        endDate: String,
+    ): List<AvailabilityDayDto>
 }

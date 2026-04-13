@@ -29,6 +29,10 @@ internal class ConfigErrorAuthRepositoryImpl(
         return Result.Error(AppError.Data.ValidationError(message))
     }
 
+    override suspend fun getProfile(userId: String): Result<Profile> {
+        return Result.Error(AppError.Data.ValidationError(message))
+    }
+
     override suspend fun restoreSession(): Result<Boolean> {
         return Result.Error(AppError.Data.ValidationError(message))
     }

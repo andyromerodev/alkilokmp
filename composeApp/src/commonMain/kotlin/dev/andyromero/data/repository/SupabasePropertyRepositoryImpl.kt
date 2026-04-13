@@ -6,6 +6,7 @@ import dev.andyromero.core.logging.Logger
 import dev.andyromero.core.result.Result
 import dev.andyromero.data.remote.property.PropertyRemoteDataSourceContract
 import dev.andyromero.data.remote.property.toDomain
+import dev.andyromero.domain.model.AvailabilityDay
 import dev.andyromero.domain.model.Property
 import dev.andyromero.domain.model.PropertyType
 import dev.andyromero.domain.repository.PropertyRepositoryContract
@@ -54,6 +55,23 @@ internal class SupabasePropertyRepositoryImpl(
                 Result.Success(property)
             } catch (e: Throwable) {
                 logger.e("SupabasePropertyRepositoryImpl", "getPropertyById failed for id=$id", e)
+                Result.Error(ErrorMapper.mapException(e))
+            }
+        }
+    }
+
+    override suspend fun getPropertyAvailability(
+        propertyId: String,
+        startDate: String,
+        endDate: String,
+    ): Result<List<AvailabilityDay>> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val data = remoteDataSource.getPropertyAvailability(propertyId, startDate, endDate)
+                    .map { it.toDomain() }
+                Result.Success(data)
+            } catch (e: Throwable) {
+                logger.e("SupabasePropertyRepositoryImpl", "getPropertyAvailability failed propertyId=$propertyId", e)
                 Result.Error(ErrorMapper.mapException(e))
             }
         }

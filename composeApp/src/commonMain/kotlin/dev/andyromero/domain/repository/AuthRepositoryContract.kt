@@ -12,5 +12,6 @@ interface AuthRepositoryContract {
     suspend fun register(email: String, password: String, fullName: String): Result<Profile>
     suspend fun logout(): Result<Unit>
     suspend fun getCurrentUser(): Result<Profile?>
+    suspend fun getProfile(userId: String): Result<Profile>
     suspend fun restoreSession(): Result<Boolean>
 }

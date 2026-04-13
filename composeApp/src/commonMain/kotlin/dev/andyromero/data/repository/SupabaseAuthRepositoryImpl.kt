@@ -122,6 +122,21 @@ internal class SupabaseAuthRepositoryImpl(
         }
     }
 
+    override suspend fun getProfile(userId: String): Result<Profile> {
+        return withContext(dispatcherProvider.io) {
+            if (!networkStatusProvider.isOnline()) {
+                return@withContext Result.Error(AppError.Network.NoConnection())
+            }
+            try {
+                val profileDto = remoteDataSource.getProfile(userId)
+                Result.Success(profileDto.toDomain(fallbackEmail = ""))
+            } catch (e: Throwable) {
+                logger.e("SupabaseAuthRepositoryImpl", "getProfile failed userId=$userId", e)
+                Result.Error(ErrorMapper.mapException(e))
+            }
+        }
+    }
+
     override suspend fun restoreSession(): Result<Boolean> {
         return withContext(dispatcherProvider.io) {
             Result.Success(localDataSource.getSession() != null)

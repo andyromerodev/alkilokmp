@@ -6,6 +6,8 @@ import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 internal class SupabasePropertyRemoteDataSourceImpl(
     private val postgrest: Postgrest,
@@ -72,6 +74,25 @@ internal class SupabasePropertyRemoteDataSourceImpl(
             .firstOrNull()
             ?: error("Property not found for id=$id")
         logger.d(TAG, "getPropertyById success id=$id")
+        return result
+    }
+
+    override suspend fun getPropertyAvailability(
+        propertyId: String,
+        startDate: String,
+        endDate: String,
+    ): List<AvailabilityDayDto> {
+        logger.d(TAG, "getPropertyAvailability request propertyId=$propertyId start=$startDate end=$endDate")
+        val response = postgrest.rpc(
+            function = "get_available_dates",
+            parameters = buildJsonObject {
+                put("p_property_id", propertyId)
+                put("p_start_date", startDate)
+                put("p_end_date", endDate)
+            },
+        )
+        val result = json.decodeFromString<List<AvailabilityDayDto>>(response.data)
+        logger.d(TAG, "getPropertyAvailability success count=${result.size}")
         return result
     }
 }
