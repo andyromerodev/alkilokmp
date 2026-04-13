@@ -1,5 +1,6 @@
 package dev.andyromero.data.remote.property
 
+import dev.andyromero.domain.model.AvailabilityDay
 import dev.andyromero.domain.model.Property
 import dev.andyromero.domain.model.PropertyImage
 import dev.andyromero.domain.model.PropertyType
@@ -54,6 +55,12 @@ private fun PropertyImageDto.toDomain(): PropertyImage {
         order = displayOrder,
     )
 }
+
+internal fun AvailabilityDayDto.toDomain(): AvailabilityDay = AvailabilityDay(
+    date = date,
+    isAvailable = isAvailable,
+    price = price,
+)
 
 private fun String?.toPropertyType(): PropertyType {
     val normalized = this
