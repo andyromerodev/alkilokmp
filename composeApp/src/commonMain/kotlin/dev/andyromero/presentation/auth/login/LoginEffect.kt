@@ -5,6 +5,4 @@ internal sealed interface LoginEffect {
     data class NavigateToRegister(val returnPropertyId: String?) : LoginEffect
     data class NavigateToBooking(val propertyId: String) : LoginEffect
     data object NavigateToPropertyList : LoginEffect
-    data object NavigateToHostTabs : LoginEffect
-    data object NavigateToAdminBookings : LoginEffect
 }

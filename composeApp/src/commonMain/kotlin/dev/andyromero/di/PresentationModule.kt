@@ -2,6 +2,7 @@ package dev.andyromero.di
 
 import dev.andyromero.presentation.auth.login.LoginViewModel
 import dev.andyromero.presentation.auth.register.RegisterViewModel
+import dev.andyromero.presentation.booking.create.CreateBookingViewModel
 import dev.andyromero.presentation.favorites.FavoritesViewModel
 import dev.andyromero.presentation.property.detail.PropertyDetailViewModel
 import dev.andyromero.presentation.property.list.PropertyListViewModel
@@ -42,6 +43,15 @@ internal val presentationModule = module {
         PropertyDetailViewModel(
             propertyId = propertyId,
             getPropertyByIdUseCase = get(),
+        )
+    }
+
+    factory { (propertyId: String) ->
+        CreateBookingViewModel(
+            propertyId = propertyId,
+            getPropertyByIdUseCase = get(),
+            getPropertyAvailabilityUseCase = get(),
+            getProfileUseCase = get(),
         )
     }
 }

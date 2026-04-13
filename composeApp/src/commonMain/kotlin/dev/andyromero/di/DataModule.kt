@@ -7,8 +7,6 @@ import dev.andyromero.core.platform.PlatformConfigProvider
 import dev.andyromero.core.platform.storage.KeyValueStoreFactory
 import dev.andyromero.data.local.favorites.FavoritesStoreContract
 import dev.andyromero.data.local.favorites.FavoritesStoreImpl
-import dev.andyromero.data.local.hostcache.HostCacheStoreContract
-import dev.andyromero.data.local.hostcache.HostCacheStoreImpl
 import dev.andyromero.data.local.session.AuthLocalDataSourceContract
 import dev.andyromero.data.local.session.SessionStoreAuthLocalDataSourceImpl
 import dev.andyromero.data.local.session.SessionStoreContract
@@ -36,7 +34,6 @@ internal val dataModule = module {
     single<SessionStoreContract> { SessionStoreImpl(keyValueStoreFactory = get()) }
     single<ThemeSettingsStoreContract> { ThemeSettingsStoreImpl(keyValueStoreFactory = get()) }
     single<FavoritesStoreContract> { FavoritesStoreImpl(keyValueStoreFactory = get()) }
-    single<HostCacheStoreContract> { HostCacheStoreImpl(keyValueStoreFactory = get()) }
 
     single<AuthLocalDataSourceContract> {
         SessionStoreAuthLocalDataSourceImpl(

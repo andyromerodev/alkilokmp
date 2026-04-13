@@ -16,19 +16,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import dev.andyromero.presentation.admin.bookings.AdminBookingsScreen
 import dev.andyromero.presentation.auth.login.LoginScreen
 import dev.andyromero.presentation.auth.login.LoginViewModel
 import dev.andyromero.presentation.auth.register.RegisterScreen
 import dev.andyromero.presentation.auth.register.RegisterViewModel
 import dev.andyromero.presentation.booking.create.CreateBookingScreen
-import dev.andyromero.domain.model.UserRole
+import dev.andyromero.presentation.booking.create.CreateBookingViewModel
 import dev.andyromero.domain.usecase.auth.ObserveAuthStateUseCase
-import dev.andyromero.domain.usecase.auth.ObserveCurrentProfileUseCase
 import dev.andyromero.domain.usecase.auth.RestoreSessionUseCase
 import dev.andyromero.presentation.components.AppSnackbarHost
 import dev.andyromero.presentation.components.rememberAppSnackbarManager
-import dev.andyromero.presentation.host.HostTabsScreen
 import dev.andyromero.presentation.main.MainTabsScreen
 import dev.andyromero.presentation.property.detail.PropertyDetailScreen
 import dev.andyromero.presentation.property.detail.PropertyDetailViewModel
@@ -47,18 +44,16 @@ internal fun AlkiloNavGraph(
 
     val restoreSessionUseCase = remember { koin.get<RestoreSessionUseCase>() }
     val observeAuthStateUseCase = remember { koin.get<ObserveAuthStateUseCase>() }
-    val observeCurrentProfileUseCase = remember { koin.get<ObserveCurrentProfileUseCase>() }
     val isLoggedIn by observeAuthStateUseCase()
         .map<Boolean, Boolean?> { it }
         .collectAsState(initial = null)
-    val currentProfile by observeCurrentProfileUseCase().collectAsState(initial = null)
 
     LaunchedEffect(Unit) {
         restoreSessionUseCase()
     }
 
-    LaunchedEffect(route, isLoggedIn, currentProfile) {
-        println("🔵 [Nav] splash check — route=$route isLoggedIn=$isLoggedIn role=${currentProfile?.role}")
+    LaunchedEffect(route, isLoggedIn) {
+        println("🔵 [Nav] splash check — route=$route isLoggedIn=$isLoggedIn")
         if (route != Routes.Splash) return@LaunchedEffect
 
         when (isLoggedIn) {
@@ -68,13 +63,8 @@ internal fun AlkiloNavGraph(
                 route = Routes.Login()
             }
             true -> {
-                val next = when (currentProfile?.role ?: UserRole.CLIENT) {
-                    UserRole.CLIENT -> Routes.MainTabs
-                    UserRole.HOST -> Routes.HostTabs
-                    UserRole.ADMIN -> Routes.AdminBookings
-                }
-                println("🔵 [Nav] → $next")
-                route = next
+                println("🔵 [Nav] → MainTabs")
+                route = Routes.MainTabs
             }
         }
     }
@@ -105,12 +95,6 @@ internal fun AlkiloNavGraph(
                     onNavigateToPropertyList = {
                         route = Routes.MainTabs
                     },
-                    onNavigateToHostTabs = {
-                        route = Routes.HostTabs
-                    },
-                    onNavigateToAdminBookings = {
-                        route = Routes.AdminBookings
-                    },
                 )
             }
 
@@ -138,10 +122,19 @@ internal fun AlkiloNavGraph(
 
             is Routes.CreateBooking -> {
                 val currentRoute = route as Routes.CreateBooking
+                val createBookingViewModel = remember(currentRoute.propertyId) {
+                    koin.get<CreateBookingViewModel> {
+                        parametersOf(currentRoute.propertyId)
+                    }
+                }
                 CreateBookingScreen(
-                    propertyId = currentRoute.propertyId,
+                    viewModel = createBookingViewModel,
                     onNavigateBack = {
-                        route = Routes.Login(returnPropertyId = currentRoute.propertyId)
+                        route = if (currentRoute.returnToPropertyDetail) {
+                            Routes.PropertyDetail(currentRoute.propertyId)
+                        } else {
+                            Routes.Login(returnPropertyId = currentRoute.propertyId)
+                        }
                     },
                 )
             }
@@ -174,7 +167,7 @@ internal fun AlkiloNavGraph(
                         route = Routes.MainTabs
                     },
                     onNavigateToBooking = { propertyId ->
-                        route = Routes.CreateBooking(propertyId)
+                        route = Routes.CreateBooking(propertyId, returnToPropertyDetail = true)
                     },
                     onShowMessage = { message ->
                         scope.launch {
@@ -184,27 +177,7 @@ internal fun AlkiloNavGraph(
                 )
             }
 
-            Routes.HostTabs -> {
-                HostTabsScreen()
-            }
 
-            Routes.HostProperties,
-            Routes.HostBookings,
-            Routes.HostSettings,
-            is Routes.HostPropertyDetail,
-            is Routes.HostEditProperty,
-            is Routes.HostCreateBooking,
-            is Routes.HostBookingDetail -> {
-                HostTabsScreen()
-            }
-
-            Routes.AdminBookings -> {
-                AdminBookingsScreen(
-                    onNavigateToLogin = {
-                        route = Routes.Login()
-                    },
-                )
-            }
         }
 
         AppSnackbarHost(

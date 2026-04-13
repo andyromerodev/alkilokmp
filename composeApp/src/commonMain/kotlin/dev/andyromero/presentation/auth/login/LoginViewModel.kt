@@ -2,7 +2,6 @@ package dev.andyromero.presentation.auth.login
 
 import dev.andyromero.core.error.AppError
 import dev.andyromero.core.result.Result
-import dev.andyromero.domain.model.UserRole
 import dev.andyromero.domain.usecase.auth.LoginUseCase
 import dev.andyromero.presentation.auth.shared.AuthValidators
 import dev.andyromero.presentation.base.BaseViewModel
@@ -57,17 +56,9 @@ internal class LoginViewModel(
                     setState { copy(isLoading = false) }
                     val propertyId = returnPropertyId
                     if (propertyId != null) {
-                        when (result.data.role) {
-                            UserRole.CLIENT -> emitEffect(LoginEffect.NavigateToBooking(propertyId))
-                            UserRole.HOST -> emitEffect(LoginEffect.NavigateToHostTabs)
-                            UserRole.ADMIN -> emitEffect(LoginEffect.NavigateToAdminBookings)
-                        }
+                        emitEffect(LoginEffect.NavigateToBooking(propertyId))
                     } else {
-                        when (result.data.role) {
-                            UserRole.HOST -> emitEffect(LoginEffect.NavigateToHostTabs)
-                            UserRole.ADMIN -> emitEffect(LoginEffect.NavigateToAdminBookings)
-                            UserRole.CLIENT -> emitEffect(LoginEffect.NavigateToPropertyList)
-                        }
+                        emitEffect(LoginEffect.NavigateToPropertyList)
                     }
                 }
 

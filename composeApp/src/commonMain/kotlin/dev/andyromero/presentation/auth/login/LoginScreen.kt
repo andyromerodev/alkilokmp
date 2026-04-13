@@ -57,8 +57,6 @@ internal fun LoginScreen(
     onNavigateToRegister: (String?) -> Unit,
     onNavigateToBooking: (String) -> Unit,
     onNavigateToPropertyList: () -> Unit,
-    onNavigateToHostTabs: () -> Unit,
-    onNavigateToAdminBookings: () -> Unit,
     onShowMessage: (String) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
@@ -72,8 +70,6 @@ internal fun LoginScreen(
                 is LoginEffect.NavigateToRegister -> onNavigateToRegister(effect.returnPropertyId)
                 is LoginEffect.NavigateToBooking -> onNavigateToBooking(effect.propertyId)
                 LoginEffect.NavigateToPropertyList -> onNavigateToPropertyList()
-                LoginEffect.NavigateToHostTabs -> onNavigateToHostTabs()
-                LoginEffect.NavigateToAdminBookings -> onNavigateToAdminBookings()
             }
         }
     }
