@@ -12,21 +12,23 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+private const val FAST_SNACKBAR_DISMISS_MS = 1200L
 
 data class AppSnackbarMessage(
     val text: String,
     val actionLabel: String? = null,
     val withDismissAction: Boolean = false,
     val duration: SnackbarDuration = SnackbarDuration.Short,
+    val autoDismissMillis: Long? = null,
 )
 
 class AppSnackbarManager {
@@ -37,6 +39,7 @@ class AppSnackbarManager {
         actionLabel: String? = null,
         withDismissAction: Boolean = false,
         duration: SnackbarDuration = SnackbarDuration.Short,
+        autoDismissMillis: Long? = FAST_SNACKBAR_DISMISS_MS,
     ) {
         _channel.send(
             AppSnackbarMessage(
@@ -44,6 +47,7 @@ class AppSnackbarManager {
                 actionLabel = actionLabel,
                 withDismissAction = withDismissAction,
                 duration = duration,
+                autoDismissMillis = autoDismissMillis,
             )
         )
     }
@@ -59,6 +63,7 @@ class AppSnackbarManager {
             actionLabel = actionLabel,
             withDismissAction = withDismissAction,
             duration = duration,
+            autoDismissMillis = null,
         )
         return try {
             _channel.send(message)
@@ -94,12 +99,23 @@ fun AppSnackbarHost(
         LaunchedEffect(Unit) {
             while (true) {
                 val message = snackbarManager.receive()
+                val dismissJob = message.autoDismissMillis?.let { millis ->
+                    launch {
+                        delay(millis)
+                        hostState.currentSnackbarData?.dismiss()
+                    }
+                }
                 val result = hostState.showSnackbar(
                     message = message.text,
                     actionLabel = message.actionLabel,
                     withDismissAction = message.withDismissAction,
-                    duration = message.duration,
+                    duration = if (message.autoDismissMillis != null) {
+                        SnackbarDuration.Indefinite
+                    } else {
+                        message.duration
+                    },
                 )
+                dismissJob?.cancel()
                 if (result == SnackbarResult.ActionPerformed && message.actionLabel != null) {
                     onAction?.invoke(message.text)
                 }
