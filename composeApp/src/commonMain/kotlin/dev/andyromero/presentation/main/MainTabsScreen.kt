@@ -1,7 +1,6 @@
 package dev.andyromero.presentation.main
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -39,6 +38,10 @@ import org.koin.core.Koin
 internal fun MainTabsScreen(
     koin: Koin,
     snackbarManager: AppSnackbarManager,
+    currentTab: Routes,
+    onTabChange: (Routes) -> Unit,
+    propertyListViewModel: PropertyListViewModel,
+    favoritesViewModel: FavoritesViewModel,
     onNavigateToPropertyDetail: (String) -> Unit,
 ) {
     val items = remember {
@@ -49,10 +52,6 @@ internal fun MainTabsScreen(
             BottomNavItem(label = "Perfil",     route = Routes.Profile,   icon = Icons.Rounded.Person),
         )
     }
-    var tabRoute by remember { mutableStateOf<Routes>(Routes.BeachList) }
-
-    val propertyListViewModel = remember { koin.get<PropertyListViewModel>() }
-    val favoritesViewModel = remember { koin.get<FavoritesViewModel>() }
     val observeProfile = remember { koin.get<ObserveCurrentProfileUseCase>() }
     val scope = rememberCoroutineScope()
 
@@ -73,13 +72,13 @@ internal fun MainTabsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             AlkiloBottomBar(
-                currentRoute = tabRoute,
+                currentRoute = currentTab,
                 items = items,
-                onNavigate = { tabRoute = it },
+                onNavigate = onTabChange,
             )
         },
     ) { paddingValues ->
-        when (tabRoute) {
+        when (currentTab) {
             Routes.BeachList -> PropertyListScreen(
                 viewModel = propertyListViewModel,
                 onNavigateToDetail = onNavigateToPropertyDetail,

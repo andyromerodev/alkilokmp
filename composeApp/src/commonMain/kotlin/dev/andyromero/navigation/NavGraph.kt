@@ -26,9 +26,11 @@ import dev.andyromero.domain.usecase.auth.ObserveAuthStateUseCase
 import dev.andyromero.domain.usecase.auth.RestoreSessionUseCase
 import dev.andyromero.presentation.components.AppSnackbarHost
 import dev.andyromero.presentation.components.rememberAppSnackbarManager
+import dev.andyromero.presentation.favorites.FavoritesViewModel
 import dev.andyromero.presentation.main.MainTabsScreen
 import dev.andyromero.presentation.property.detail.PropertyDetailScreen
 import dev.andyromero.presentation.property.detail.PropertyDetailViewModel
+import dev.andyromero.presentation.property.list.PropertyListViewModel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.core.Koin
@@ -41,9 +43,12 @@ internal fun AlkiloNavGraph(
 ) {
     println("🔵 [Nav] AlkiloNavGraph — start, route=$startDestination")
     var route by remember { mutableStateOf<Routes>(startDestination) }
+    var mainTabRoute by remember { mutableStateOf<Routes>(Routes.BeachList) }
 
     val restoreSessionUseCase = remember { koin.get<RestoreSessionUseCase>() }
     val observeAuthStateUseCase = remember { koin.get<ObserveAuthStateUseCase>() }
+    val propertyListViewModel = remember { koin.get<PropertyListViewModel>() }
+    val favoritesViewModel = remember { koin.get<FavoritesViewModel>() }
     val isLoggedIn by observeAuthStateUseCase()
         .map<Boolean, Boolean?> { it }
         .collectAsState(initial = null)
@@ -148,6 +153,10 @@ internal fun AlkiloNavGraph(
                 MainTabsScreen(
                     koin = koin,
                     snackbarManager = snackbarManager,
+                    currentTab = mainTabRoute,
+                    onTabChange = { mainTabRoute = it },
+                    propertyListViewModel = propertyListViewModel,
+                    favoritesViewModel = favoritesViewModel,
                     onNavigateToPropertyDetail = { propertyId ->
                         route = Routes.PropertyDetail(propertyId)
                     },
