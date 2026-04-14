@@ -33,7 +33,7 @@ internal val presentationModule = module {
 
     factory {
         FavoritesViewModel(
-            getPropertiesUseCase = get(),
+            getFavoritePropertiesUseCase = get(),
             observeFavoritesUseCase = get(),
             toggleFavoriteUseCase = get(),
         )

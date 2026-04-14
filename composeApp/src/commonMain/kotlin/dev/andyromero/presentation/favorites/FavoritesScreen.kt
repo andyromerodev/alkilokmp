@@ -39,10 +39,10 @@ internal fun FavoritesScreen(
         }
     }
 
-    val favoriteProperties = state.properties.filter { state.favoriteIds.contains(it.id) }
+    val favoriteProperties = state.properties
 
     when {
-        state.isLoading && state.properties.isEmpty() -> {
+        state.isLoading && favoriteProperties.isEmpty() -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
