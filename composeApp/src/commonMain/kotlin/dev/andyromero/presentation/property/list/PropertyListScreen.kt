@@ -6,6 +6,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
@@ -16,8 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
@@ -27,10 +33,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -38,7 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import dev.andyromero.domain.model.Property
+import kotlinx.coroutines.launch
 import dev.andyromero.presentation.components.ErrorState
 import dev.andyromero.presentation.property.list.components.PropertyCard
 import dev.andyromero.presentation.property.list.components.PropertyCardShimmer
@@ -54,8 +61,11 @@ internal fun PropertyListScreen(
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     val state by viewModel.state.collectAsState()
-    var query by rememberSaveable { mutableStateOf("") }
-    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = state.firstVisibleItemIndex,
+        initialFirstVisibleItemScrollOffset = state.firstVisibleItemScrollOffset,
+    )
     val pullToRefreshState = rememberPullToRefreshState()
     val density = LocalDensity.current
     var headerHeightPx by remember { mutableStateOf(0) }
@@ -71,7 +81,7 @@ internal fun PropertyListScreen(
         }
     }
 
-    val filteredProperties = state.properties.filterByQuery(query)
+    val properties = state.properties
 
     val isHeaderVisible by remember {
         derivedStateOf {
@@ -82,24 +92,35 @@ internal fun PropertyListScreen(
     // Paging trigger
     LaunchedEffect(
         listState,
-        filteredProperties.size,
+        properties.size,
         state.isLoading,
         state.isPaging,
         state.canLoadMore,
-        query,
+        state.searchQuery,
     ) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
             .collect { lastVisibleIndex ->
-                val shouldLoadMore = query.isBlank() &&
-                    filteredProperties.isNotEmpty() &&
+                val shouldLoadMore = state.searchQuery.isBlank() &&
+                    properties.isNotEmpty() &&
                     !state.isLoading &&
                     !state.isPaging &&
                     state.canLoadMore &&
-                    lastVisibleIndex >= filteredProperties.lastIndex - 2
+                    lastVisibleIndex >= properties.lastIndex - 2
                 if (shouldLoadMore) {
                     viewModel.sendIntent(PropertyListIntent.LoadNextPage)
                 }
             }
+    }
+
+    DisposableEffect(listState) {
+        onDispose {
+            viewModel.sendIntent(
+                PropertyListIntent.SaveScrollPosition(
+                    index = listState.firstVisibleItemIndex,
+                    offset = listState.firstVisibleItemScrollOffset,
+                )
+            )
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -131,7 +152,7 @@ internal fun PropertyListScreen(
                     }
                 }
 
-                filteredProperties.isEmpty() -> {
+                properties.isEmpty() -> {
                     item {
                         Box(
                             modifier = Modifier
@@ -148,7 +169,7 @@ internal fun PropertyListScreen(
                 }
 
                 else -> {
-                    items(filteredProperties, key = { it.id }) { property ->
+                    items(properties, key = { it.id }) { property ->
                         PropertyCard(
                             property = property,
                             isFavorite = state.favoriteIds.contains(property.id),
@@ -189,12 +210,35 @@ internal fun PropertyListScreen(
         ) {
             SearchHeader(
                 userName = userName,
-                query = query,
-                onQueryChange = { query = it },
+                query = state.searchQuery,
+                onQueryChange = { viewModel.sendIntent(PropertyListIntent.UpdateSearchQuery(it)) },
                 selectedType = state.selectedType,
                 onSelectType = { viewModel.sendIntent(PropertyListIntent.SelectType(it)) },
                 modifier = Modifier.onSizeChanged { headerHeightPx = it.height },
             )
+        }
+
+        AnimatedVisibility(
+            visible = !isHeaderVisible,
+            enter = scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn(tween(200)),
+            exit = scaleOut(tween(150)) + fadeOut(tween(150)),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    end = 16.dp,
+                    bottom = contentPadding.calculateBottomPadding() + 16.dp,
+                ),
+        ) {
+            FloatingActionButton(
+                onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowUp,
+                    contentDescription = "Ir al inicio",
+                )
+            }
         }
 
         PullToRefreshDefaults.Indicator(
@@ -205,11 +249,3 @@ internal fun PropertyListScreen(
     }
 }
 
-private fun List<Property>.filterByQuery(query: String): List<Property> {
-    if (query.isBlank()) return this
-    val normalized = query.trim()
-    return filter { property ->
-        property.title.contains(normalized, ignoreCase = true) ||
-            property.address.contains(normalized, ignoreCase = true)
-    }
-}

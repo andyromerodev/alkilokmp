@@ -26,6 +26,7 @@ internal class SupabasePropertyRepositoryImpl(
         page: Int,
         pageSize: Int,
         type: PropertyType?,
+        query: String?,
     ): Result<List<Property>> {
         return withContext(dispatcherProvider.io) {
             try {
@@ -33,6 +34,7 @@ internal class SupabasePropertyRepositoryImpl(
                     page = page,
                     pageSize = pageSize,
                     type = type,
+                    query = query,
                 )
                     .map { it.toDomain() }
                 propertiesState.value = if (page == 0) {

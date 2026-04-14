@@ -9,8 +9,9 @@ import kotlinx.coroutines.flow.Flow
 interface PropertyRepositoryContract {
     suspend fun getProperties(
         page: Int = 0,
-        pageSize: Int = 20,
+        pageSize: Int = 100,
         type: PropertyType? = null,
+        query: String? = null,
     ): Result<List<Property>>
 
     suspend fun getPropertyById(id: String): Result<Property>

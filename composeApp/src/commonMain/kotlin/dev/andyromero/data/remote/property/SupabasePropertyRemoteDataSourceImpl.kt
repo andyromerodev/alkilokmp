@@ -23,10 +23,11 @@ internal class SupabasePropertyRemoteDataSourceImpl(
         page: Int,
         pageSize: Int,
         type: PropertyType?,
+        query: String?,
     ): List<PropertyDto> {
         logger.d(
             TAG,
-            "getProperties request page=$page pageSize=$pageSize type=${type?.name ?: "ALL"}",
+            "getProperties request page=$page pageSize=$pageSize type=${type?.name ?: "ALL"} query=$query",
         )
         val from = page * pageSize
         val to = from + pageSize - 1
@@ -43,6 +44,12 @@ internal class SupabasePropertyRemoteDataSourceImpl(
                     eq("is_active", true)
                     type?.let { selectedType ->
                         eq("type", selectedType.name)
+                    }
+                    query?.takeIf { it.isNotBlank() }?.let { q ->
+                        or {
+                            ilike("title", "%$q%")
+                            ilike("location", "%$q%")
+                        }
                     }
                 }
                 order("created_at", Order.DESCENDING)
